@@ -36,7 +36,7 @@
  exporters:        xcode_mac, vs2017, linux_make
 
  type:             Component
- mainClass:        MainComponent
+ mainClass:        AudioProcessorGraph2
 
  useLocalCopy:     1
 
@@ -48,11 +48,11 @@
 #pragma once
 
 //==============================================================================
-class ProcessorBase  : public AudioProcessor
+class ProcessorBase2  : public AudioProcessor
 {
 public:
     //==============================================================================
-    ProcessorBase()  {}
+    ProcessorBase2()  {}
 
     //==============================================================================
     void prepareToPlay (double, int) override {}
@@ -82,14 +82,14 @@ public:
 
 private:
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ProcessorBase)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ProcessorBase2)
 };
 
 //==============================================================================
-class OscillatorProcessor  : public ProcessorBase
+class OscillatorProcessor2  : public ProcessorBase
 {
 public:
-    OscillatorProcessor()
+    OscillatorProcessor2()
     {
         oscillator.setFrequency (440.0f);
         oscillator.initialise ([] (float x) { return std::sin (x); });
@@ -120,10 +120,10 @@ private:
 };
 
 //==============================================================================
-class GainProcessor  : public ProcessorBase
+class GainProcessor2  : public ProcessorBase
 {
 public:
-    GainProcessor()
+    GainProcessor2()
     {
         gain.setGainDecibels (-6.0f);
     }
@@ -153,10 +153,10 @@ private:
 };
 
 //==============================================================================
-class FilterProcessor  : public ProcessorBase
+class FilterProcessor2  : public ProcessorBase
 {
 public:
-    FilterProcessor() {}
+    FilterProcessor2() {}
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override
     {
@@ -185,7 +185,7 @@ private:
 };
 
 //==============================================================================
-class MainComponent  : public Component,
+class AudioProcessorGraph2  : public Component,
                        private Timer
 {
 public:
@@ -194,7 +194,7 @@ public:
     using Node = AudioProcessorGraph::Node;
 
     //==============================================================================
-    MainComponent()
+    AudioProcessorGraph2()
         : mainProcessor (new AudioProcessorGraph())
     {
         addAndMakeVisible (muteInput);
@@ -239,7 +239,7 @@ public:
         startTimer (100);
     }
 
-    ~MainComponent() override
+    ~AudioProcessorGraph2() override
     {
         auto device = MidiInput::getDefaultDevice();
 
@@ -476,5 +476,5 @@ private:
     AudioProcessorPlayer player;
 
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioProcessorGraph2)
 };

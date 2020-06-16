@@ -10,6 +10,9 @@
 
 #include <JuceHeader.h>
 
+#include "AudioProcessorGraphTutorial_01.h"
+#include "AudioProcessorGraphTutorial_02.h"
+
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
@@ -61,6 +64,9 @@ private:
     TextButton stopButton;
     ToggleButton loopingToggle;
     Label currentPositionLabel;
+
+    //==========================================================================
+    AudioProcessorGraph2 graphComponent;
 
     AudioFormatManager formatManager;
     std::unique_ptr<AudioFormatReaderSource> readerSource;

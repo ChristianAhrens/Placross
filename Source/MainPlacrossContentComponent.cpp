@@ -35,7 +35,9 @@
         addAndMakeVisible (&currentPositionLabel);
         currentPositionLabel.setText ("Stopped", dontSendNotification);
 
-        setSize (300, 200);
+        addAndMakeVisible(&graphComponent);
+
+        setSize (300, 320);
 
         formatManager.registerBasicFormats();
         transportSource.addChangeListener (this);
@@ -106,6 +108,7 @@
         stopButton          .setBounds (10, 70,  getWidth() - 20, 20);
         loopingToggle       .setBounds (10, 100, getWidth() - 20, 20);
         currentPositionLabel.setBounds (10, 130, getWidth() - 20, 20);
+        graphComponent      .setBounds (10, 160, getWidth() - 20, 150);
     }
 
     void MainPlacrossContentComponent::changeListenerCallback (ChangeBroadcaster* source)
