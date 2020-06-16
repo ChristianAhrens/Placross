@@ -35,25 +35,17 @@
         addAndMakeVisible (&currentPositionLabel);
         currentPositionLabel.setText ("Stopped", dontSendNotification);
 
-        addAndMakeVisible(&graphComponent);
+        addAndMakeVisible(&graphComponentL);
+        addAndMakeVisible(&graphComponentR);
 
-        setSize (300, 320);
+        setSize (500, 320);
 
         formatManager.registerBasicFormats();
         transportSource.addChangeListener (this);
-        
-        // Some platforms require permissions to open input channels so request that here
-        if (RuntimePermissions::isRequired (RuntimePermissions::recordAudio)
-            && ! RuntimePermissions::isGranted (RuntimePermissions::recordAudio))
-        {
-            RuntimePermissions::request (RuntimePermissions::recordAudio,
-                                        [&] (bool granted) { if (granted)  setAudioChannels (2, 2); });
-        }
-        else
-        {
-            // Specify the number of input and output channels that we want to open
-            setAudioChannels (2, 2);
-        }
+
+        // Specify the number of output channels that we want to open
+        setAudioChannels (0, 2);
+
         startTimer (20);
     }
 
@@ -108,7 +100,8 @@
         stopButton          .setBounds (10, 70,  getWidth() - 20, 20);
         loopingToggle       .setBounds (10, 100, getWidth() - 20, 20);
         currentPositionLabel.setBounds (10, 130, getWidth() - 20, 20);
-        graphComponent      .setBounds (10, 160, getWidth() - 20, 150);
+        graphComponentL     .setBounds (10, 160, getWidth()/2 - 20, 150);
+        graphComponentR     .setBounds (10 + getWidth()/2, 160, getWidth()/2 - 20, 150);
     }
 
     void MainPlacrossContentComponent::changeListenerCallback (ChangeBroadcaster* source)

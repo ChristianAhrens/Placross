@@ -10,8 +10,7 @@
 
 #include <JuceHeader.h>
 
-#include "AudioProcessorGraphTutorial_01.h"
-#include "AudioProcessorGraphTutorial_02.h"
+#include "AudioProcessorGraph2.h"
 
 //==============================================================================
 /*
@@ -66,7 +65,8 @@ private:
     Label currentPositionLabel;
 
     //==========================================================================
-    AudioProcessorGraph2 graphComponent;
+    AudioProcessorGraph2 graphComponentL;
+    AudioProcessorGraph2 graphComponentR;
 
     AudioFormatManager formatManager;
     std::unique_ptr<AudioFormatReaderSource> readerSource;
