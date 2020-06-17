@@ -10,8 +10,12 @@
       <FILE id="r5Wlao" name="Placross.xcf" compile="0" resource="1" file="Resources/Placross.xcf"/>
     </GROUP>
     <GROUP id="{0480E33C-041F-2346-F9AA-44BBEAD80CFE}" name="Source">
-      <FILE id="yJ1g2J" name="AudioProcessorGraph2.h" compile="0" resource="0"
-            file="Source/AudioProcessorGraph2.h"/>
+      <GROUP id="{CBA03720-F3C9-6E88-0106-2781A5BAD1DF}" name="AudioProcessors">
+        <FILE id="FZ2uil" name="CustomProcessorGraph.cpp" compile="1" resource="0"
+              file="Source/AudioProcessors/CustomProcessorGraph.cpp"/>
+        <FILE id="qK5qv4" name="CustomProcessorGraph.h" compile="0" resource="0"
+              file="Source/AudioProcessors/CustomProcessorGraph.h"/>
+      </GROUP>
       <FILE id="DA1JGJ" name="MainPlacrossContentComponent.cpp" compile="1"
             resource="0" file="Source/MainPlacrossContentComponent.cpp"/>
       <FILE id="HhpaQw" name="MainPlacrossContentComponent.h" compile="0"
