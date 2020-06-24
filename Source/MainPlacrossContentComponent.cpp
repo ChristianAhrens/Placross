@@ -12,43 +12,20 @@
 
 //==============================================================================
     MainPlacrossContentComponent::MainPlacrossContentComponent()
-        :   state (Stopped)
     {
-        addAndMakeVisible (&openButton);
-        openButton.setButtonText ("Open...");
-        openButton.onClick = [this] { openButtonClicked(); };
+        m_playerComponent = std::make_unique<AudioPlayerComponent>();
+        addAndMakeVisible(m_playerComponent.get());
 
-        addAndMakeVisible (&playButton);
-        playButton.setButtonText ("Play");
-        playButton.onClick = [this] { playButtonClicked(); };
-        playButton.setColour (TextButton::buttonColourId, Colours::green);
-        playButton.setEnabled (false);
+        for (auto i = 0; i < m_playerComponent->getCurrentChannelCount(); ++i)
+        {
+            m_stripComponents[i] = std::make_unique<ChannelStripComponent>();
+            addAndMakeVisible(m_stripComponents.at(i).get());
+        }
 
-        addAndMakeVisible (&stopButton);
-        stopButton.setButtonText ("Stop");
-        stopButton.onClick = [this] { stopButtonClicked(); };
-        stopButton.setColour (TextButton::buttonColourId, Colours::red);
-        stopButton.setEnabled (false);
-
-        addAndMakeVisible (&loopingToggle);
-        loopingToggle.setButtonText ("Loop");
-        loopingToggle.onClick = [this] { loopButtonChanged(); };
-
-        addAndMakeVisible (&currentPositionLabel);
-        currentPositionLabel.setText ("Stopped", dontSendNotification);
-
-        addAndMakeVisible(&graphComponentL);
-        addAndMakeVisible(&graphComponentR);
-
-        setSize (500, 320);
-
-        formatManager.registerBasicFormats();
-        transportSource.addChangeListener (this);
+        setSize (300, 500);
 
         // Specify the number of output channels that we want to open
-        setAudioChannels (0, 2);
-
-        startTimer (20);
+        setAudioChannels (0, m_playerComponent->getCurrentChannelCount());
     }
 
     MainPlacrossContentComponent::~MainPlacrossContentComponent()
@@ -59,154 +36,66 @@
 
     void MainPlacrossContentComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
     {
-        // This function will be called when the audio device is started, or when
-        // its settings (i.e. sample rate, block size, etc) are changed.
+        m_playerComponent->prepareToPlay (samplesPerBlockExpected, sampleRate);
 
-        // You can use this function to initialise any resources you might need,
-        // but be careful - it will be called on the audio thread, not the GUI thread.
-
-        // For more details, see the help for AudioProcessor::prepareToPlay()
-        transportSource.prepareToPlay (samplesPerBlockExpected, sampleRate);
+        for (auto& stripComponentKV : m_stripComponents)
+            stripComponentKV.second->audioDeviceAboutToStart(deviceManager.getCurrentAudioDevice());
     }
 
-    void MainPlacrossContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill)
+    void MainPlacrossContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& info)
     {
-        // Your audio-processing code goes here!
+        // get the next chunk of audio from player ...
+        m_playerComponent->getNextAudioBlock (info);
 
-        // For more details, see the help for AudioProcessor::getNextAudioBlock()
-
-        // Right now we are not producing any data, in which case we need to clear the buffer
-        // (to prevent the output of random noise)
-        if (readerSource.get() == nullptr)
+        // ... and run it through the processorGraphs for each channel
+        for (auto i = 0; i < info.buffer->getNumChannels(); ++i)
         {
-            bufferToFill.clearActiveBufferRegion();
-            return;
-        }
+            if (m_stripComponents.count(i) != 0 && m_stripComponents.at(i))
+            {
+                auto strip = m_stripComponents.at(i).get();
 
-        transportSource.getNextAudioBlock (bufferToFill);
+                info.buffer->applyGainRamp(0, info.numSamples, 0.0f, 1.0f);
+                continue;
+
+                auto ReadPointer = info.buffer->getArrayOfReadPointers();
+                const float** inputChannelData = &ReadPointer[i];
+                int numInputChannels = 1;
+                auto WritePointer = info.buffer->getArrayOfWritePointers();
+                float** outputChannelData = &WritePointer[i];
+                int numOutputChannels = 1;
+                int numSamples = info.numSamples;
+
+                strip->audioDeviceIOCallback(inputChannelData, numInputChannels, outputChannelData, numOutputChannels, numSamples);
+            }
+        }
     }
 
     void MainPlacrossContentComponent::releaseResources()
     {
-        // This will be called when the audio device stops, or when it is being
-        // restarted due to a setting change.
+        m_playerComponent->releaseResources();
 
-        // For more details, see the help for AudioProcessor::releaseResources()
-        transportSource.releaseResources();
+        for (auto& stripComponentKV : m_stripComponents)
+            stripComponentKV.second->audioDeviceStopped();
     }
 
     void MainPlacrossContentComponent::resized()
     {
-        openButton          .setBounds (10, 10,  getWidth() - 20, 20);
-        playButton          .setBounds (10, 40,  getWidth() - 20, 20);
-        stopButton          .setBounds (10, 70,  getWidth() - 20, 20);
-        loopingToggle       .setBounds (10, 100, getWidth() - 20, 20);
-        currentPositionLabel.setBounds (10, 130, getWidth() - 20, 20);
-        graphComponentL     .setBounds (10, 160, getWidth()/2 - 20, 150);
-        graphComponentR     .setBounds (10 + getWidth()/2, 160, getWidth()/2 - 20, 150);
-    }
+        FlexBox fb;
+        fb.flexDirection = FlexBox::Direction::column;
+        fb.justifyContent = FlexBox::JustifyContent::center;
 
-    void MainPlacrossContentComponent::changeListenerCallback (ChangeBroadcaster* source)
-    {
-        if (source == &transportSource)
+        FlexBox nestedFb;
+        nestedFb.flexDirection = FlexBox::Direction::row;
+        nestedFb.justifyContent = FlexBox::JustifyContent::center;
+        for (auto& stripComponentKV : m_stripComponents)
         {
-            if (transportSource.isPlaying())
-                changeState (Playing);
-            else
-                changeState (Stopped);
+            nestedFb.items.add(FlexItem(*stripComponentKV.second.get()).withFlex(1).withMargin(FlexItem::Margin(5, 5, 5, 5)));
         }
-    }
 
-    void MainPlacrossContentComponent::timerCallback()
-    {
-        if (transportSource.isPlaying())
-        {
-            RelativeTime position (transportSource.getCurrentPosition());
-
-            auto minutes = ((int) position.inMinutes()) % 60;
-            auto seconds = ((int) position.inSeconds()) % 60;
-            auto millis  = ((int) position.inMilliseconds()) % 1000;
-
-            auto positionString = String::formatted ("%02d:%02d:%03d", minutes, seconds, millis);
-
-            currentPositionLabel.setText (positionString, dontSendNotification);
-        }
-        else
-        {
-            currentPositionLabel.setText ("Stopped", dontSendNotification);
-        }
-    }
-
-    void MainPlacrossContentComponent::updateLoopState (bool shouldLoop)
-    {
-        if (readerSource.get() != nullptr)
-            readerSource->setLooping (shouldLoop);
-    }
-
-    void MainPlacrossContentComponent::changeState (TransportState newState)
-    {
-        if (state != newState)
-        {
-            state = newState;
-
-            switch (state)
-            {
-                case Stopped:
-                    stopButton.setEnabled (false);
-                    playButton.setEnabled (true);
-                    transportSource.setPosition (0.0);
-                    break;
-
-                case Starting:
-                    playButton.setEnabled (false);
-                    transportSource.start();
-                    break;
-
-                case Playing:
-                    stopButton.setEnabled (true);
-                    break;
-
-                case Stopping:
-                    transportSource.stop();
-                    break;
-            }
-        }
-    }
-
-    void MainPlacrossContentComponent::openButtonClicked()
-    {
-        FileChooser chooser ("Select a Wave file to play...",
-                             {},
-                             "*.wav");
-
-        if (chooser.browseForFileToOpen())
-        {
-            auto file = chooser.getResult();
-            auto* reader = formatManager.createReaderFor (file);
-
-            if (reader != nullptr)
-            {
-                std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (reader, true));
-                transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate);
-                playButton.setEnabled (true);
-                readerSource.reset (newSource.release());
-            }
-        }
-    }
-
-    void MainPlacrossContentComponent::playButtonClicked()
-    {
-        updateLoopState (loopingToggle.getToggleState());
-        changeState (Starting);
-    }
-
-    void MainPlacrossContentComponent::stopButtonClicked()
-    {
-        changeState (Stopping);
-    }
-
-    void MainPlacrossContentComponent::loopButtonChanged()
-    {
-        updateLoopState (loopingToggle.getToggleState());
+        fb.items.addArray({
+            FlexItem(*m_playerComponent.get()).withMinHeight(160).withMargin(FlexItem::Margin(10,10,0,10)),
+            FlexItem(nestedFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(5,5,5,5))
+            });
+        fb.performLayout(getLocalBounds().toFloat());
     }
 

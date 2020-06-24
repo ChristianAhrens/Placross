@@ -10,6 +10,12 @@
       <FILE id="r5Wlao" name="Placross.xcf" compile="0" resource="1" file="Resources/Placross.xcf"/>
     </GROUP>
     <GROUP id="{0480E33C-041F-2346-F9AA-44BBEAD80CFE}" name="Source">
+      <GROUP id="{B347140A-09FE-C200-A05B-EE5DD62B9DC9}" name="AudioPlayer">
+        <FILE id="FxUrhR" name="AudioPlayerComponent.cpp" compile="1" resource="0"
+              file="Source/AudioPlayer/AudioPlayerComponent.cpp"/>
+        <FILE id="aXMar6" name="AudioPlayerComponent.h" compile="0" resource="0"
+              file="Source/AudioPlayer/AudioPlayerComponent.h"/>
+      </GROUP>
       <GROUP id="{CBA03720-F3C9-6E88-0106-2781A5BAD1DF}" name="ChannelStrip">
         <FILE id="PXaXhG" name="ChannelStripComponent.cpp" compile="1" resource="0"
               file="Source/ChannelStrip/ChannelStripComponent.cpp"/>
@@ -19,6 +25,10 @@
               file="Source/ChannelStrip/ChannelStripProcessor.cpp"/>
         <FILE id="ok1XEP" name="ChannelStripProcessor.h" compile="0" resource="0"
               file="Source/ChannelStrip/ChannelStripProcessor.h"/>
+        <FILE id="MyPiVI" name="ChannelStripProcessorEditor.cpp" compile="1"
+              resource="0" file="Source/ChannelStrip/ChannelStripProcessorEditor.cpp"/>
+        <FILE id="VbREff" name="ChannelStripProcessorEditor.h" compile="0"
+              resource="0" file="Source/ChannelStrip/ChannelStripProcessorEditor.h"/>
         <FILE id="kAr6eO" name="ChannelStripProcessorPlayer.cpp" compile="1"
               resource="0" file="Source/ChannelStrip/ChannelStripProcessorPlayer.cpp"/>
         <FILE id="aWsC5m" name="ChannelStripProcessorPlayer.h" compile="0"

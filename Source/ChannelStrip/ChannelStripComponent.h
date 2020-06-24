@@ -12,9 +12,12 @@
 
 #include <JuceHeader.h>
 
+#include "ChannelStripProcessorPlayer.h"
+#include "ChannelStripProcessor.h"
+
 //==============================================================================
-class ChannelStripComponent  : public Component,
-                       private Timer
+class ChannelStripComponent  :  public Component,
+                                public AudioIODeviceCallback
 {
 public:
     //==============================================================================
@@ -23,58 +26,39 @@ public:
 
     //==============================================================================
     ChannelStripComponent();
-
     ~ChannelStripComponent() override;
 
     //==============================================================================
     void paint (Graphics& g) override;
-
     void resized() override;
+
+    //==============================================================================
+    void audioDeviceIOCallback(const float** inputChannelData,
+        int numInputChannels,
+        float** outputChannelData,
+        int numOutputChannels,
+        int numSamples) override;
+    void audioDeviceAboutToStart(AudioIODevice* device) override;
+    void audioDeviceStopped() override;
+    void audioDeviceError(const juce::String &errorMessage) override;
 
 private:
     //==============================================================================
     void initialiseGraph();
 
-    void timerCallback() override;
-
-    void updateGraph();
-
+    void createAudioNodes();
     void connectAudioNodes();
-
-    void connectMidiNodes();
+    void destroyAudioNodes();
 
     //==============================================================================
-    StringArray processorChoices { "30HzOscillator", "440HzOscillator", "2kHzOscillator", "Gain", "HPFilter", "LPFilter" };
+    std::unique_ptr<AudioProcessorGraph>                m_mainProcessor;
 
-    Label labelSlot1 { {}, { "Slot 1" } };
-    Label labelSlot2 { {}, { "Slot 2" } };
-    Label labelSlot3 { {}, { "Slot 3" } };
-    Label labelSlot4 { {}, { "Slot 4" } };
+    ReferenceCountedArray<Node>                         m_processorNodes;
 
-    ComboBox processorSlot1;
-    ComboBox processorSlot2;
-    ComboBox processorSlot3;
-    ComboBox processorSlot4;
+    Node::Ptr                                           m_audioInputNode;
+    Node::Ptr                                           m_audioOutputNode;
 
-    ToggleButton bypassSlot1 { "Bypass 1" };
-    ToggleButton bypassSlot2 { "Bypass 2" };
-    ToggleButton bypassSlot3 { "Bypass 3" };
-    ToggleButton bypassSlot4 { "Bypass 4" };
-
-    std::unique_ptr<AudioProcessorGraph> mainProcessor;
-
-    Node::Ptr audioInputNode;
-    Node::Ptr audioOutputNode;
-    Node::Ptr midiInputNode;
-    Node::Ptr midiOutputNode;
-
-    Node::Ptr slot1Node;
-    Node::Ptr slot2Node;
-    Node::Ptr slot3Node;
-    Node::Ptr slot4Node;
-
-    AudioDeviceManager deviceManager;
-    AudioProcessorPlayer player;
+    ChannelStripProcessorPlayer                         m_player;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelStripComponent)

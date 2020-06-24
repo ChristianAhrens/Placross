@@ -8,9 +8,8 @@
   ==============================================================================
 */
 
-#pragma once
-
 #include "ChannelStripProcessor.h"
+#include "ChannelStripProcessorEditor.h"
 
 ProcessorBase::ProcessorBase()
 {
@@ -26,16 +25,6 @@ void ProcessorBase::releaseResources()
 
 void ProcessorBase::processBlock(AudioSampleBuffer&, MidiBuffer&) 
 {
-}
-
-AudioProcessorEditor* ProcessorBase::createEditor() 
-{
-	return nullptr; 
-}
-
-bool ProcessorBase::hasEditor() const 
-{
-	return false; 
 }
 
 const String ProcessorBase::getName() const 
@@ -89,143 +78,131 @@ void ProcessorBase::setStateInformation(const void*, int)
 {
 }
 
-
-OscillatorProcessor30Hz::OscillatorProcessor30Hz()
+juce::Range<double> ProcessorBase::getParameterRange(int parameterIndex)
 {
-	oscillator.setFrequency(30.0f);
-	oscillator.initialise([](float x) { return std::sin(x); });
+	for (auto parameterNode : getParameterTree())
+		if (parameterNode->getParameter()->getParameterIndex() == parameterIndex)
+		{
+			AudioParameterFloat* floatParam = dynamic_cast<AudioParameterFloat*>(parameterNode->getParameter());
+			if (floatParam)
+			{
+				auto rangef = floatParam->getNormalisableRange().getRange();
+				return juce::Range<double>(rangef.getStart(), rangef.getEnd());
+			}
+		}
+	
+	return juce::Range<double>{};
 }
 
-void OscillatorProcessor30Hz::prepareToPlay(double sampleRate, int samplesPerBlock)
+double ProcessorBase::getParameterStepWidth(int parameterIndex)
 {
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock) };
-	oscillator.prepare(spec);
-}
+	for (auto parameterNode : getParameterTree())
+		if (parameterNode->getParameter()->getParameterIndex() == parameterIndex)
+		{
+			AudioParameterFloat* floatParam = dynamic_cast<AudioParameterFloat*>(parameterNode->getParameter());
+			if (floatParam)
+			{
+				return floatParam->getNormalisableRange().interval;
+			}
+		}
 
-void OscillatorProcessor30Hz::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
-{
-	dsp::AudioBlock<float> block(buffer);
-	dsp::ProcessContextReplacing<float> context(block);
-	oscillator.process(context);
-}
-
-void OscillatorProcessor30Hz::reset()
-{
-	oscillator.reset();
-}
-
-const String OscillatorProcessor30Hz::getName() const 
-{ 
-	return "30HzOscillator"; 
-}
-
-
-OscillatorProcessor440Hz::OscillatorProcessor440Hz()
-{
-	oscillator.setFrequency(440.0f);
-	oscillator.initialise([](float x) { return std::sin(x); });
-}
-
-void OscillatorProcessor440Hz::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock) };
-	oscillator.prepare(spec);
-}
-
-void OscillatorProcessor440Hz::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
-{
-	dsp::AudioBlock<float> block(buffer);
-	dsp::ProcessContextReplacing<float> context(block);
-	oscillator.process(context);
-}
-
-void OscillatorProcessor440Hz::reset()
-{
-	oscillator.reset();
-}
-
-const String OscillatorProcessor440Hz::getName() const 
-{ 
-	return "440HzOscillator"; 
-}
-
-
-OscillatorProcessor2kHz::OscillatorProcessor2kHz()
-{
-	oscillator.setFrequency(2000.0f);
-	oscillator.initialise([](float x) { return std::sin(x); });
-}
-
-void OscillatorProcessor2kHz::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock) };
-	oscillator.prepare(spec);
-}
-
-void OscillatorProcessor2kHz::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
-{
-	dsp::AudioBlock<float> block(buffer);
-	dsp::ProcessContextReplacing<float> context(block);
-	oscillator.process(context);
-}
-
-void OscillatorProcessor2kHz::reset()
-{
-	oscillator.reset();
-}
-
-const String OscillatorProcessor2kHz::getName() const 
-{ 
-	return "2kHzOscillator"; 
+	return double{};
 }
 
 
 GainProcessor::GainProcessor()
 {
-	gain.setGainDecibels(-6.0f);
+	addParameter(m_gainValue = new AudioParameterFloat(
+		"gain", // parameter ID
+		"Gain", // parameter name
+		0.0f,   // minimum value
+		1.0f,   // maximum value
+		1.0f)); // default value
+
+	m_gain.setGainLinear(*m_gainValue);
 }
 
 void GainProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock), 2 };
-	gain.prepare(spec);
+	m_gain.prepare(spec);
 }
 
 void GainProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 {
+	m_gain.setGainDecibels(*m_gainValue);
+
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
-	gain.process(context);
+	m_gain.process(context);
 }
 
 void GainProcessor::reset()
 {
-	gain.reset();
+	m_gain.reset();
 }
 
-const String GainProcessor::getName() const { return "Gain"; }
+AudioProcessorEditor* GainProcessor::createEditor()
+{
+	auto editor = std::make_unique<GainProcessorEditor>(*this);
+	editor->setSize(50, 60);
+
+	return editor.release();
+}
+
+bool GainProcessor::hasEditor() const
+{
+	return true;
+}
+
+const String GainProcessor::getName() const 
+{ 
+	return "Gain"; 
+}
 
 
-HPFilterProcessor::HPFilterProcessor() {}
+HPFilterProcessor::HPFilterProcessor() 
+{
+	addParameter(m_filterValue = new AudioParameterFloat(
+		"hpf", // parameter ID
+		"HPFilter", // parameter name
+		20.0f,   // minimum value
+		20000.0f,   // maximum value
+		20.0f)); // default value
+
+}
 
 void HPFilterProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-	*filter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 1000.0f);
+	*m_filter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, *m_filterValue);
 
 	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock), 2 };
-	filter.prepare(spec);
+	m_filter.prepare(spec);
 }
 
 void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 {
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
-	filter.process(context);
+	m_filter.process(context);
 }
 
 void HPFilterProcessor::reset()
 {
-	filter.reset();
+	m_filter.reset();
+}
+
+AudioProcessorEditor* HPFilterProcessor::createEditor()
+{
+	auto editor = std::make_unique<HPFilterProcessorEditor>(*this);
+	editor->setSize(50, 60);
+
+	return editor.release();
+}
+
+bool HPFilterProcessor::hasEditor() const
+{
+	return true;
 }
 
 const String HPFilterProcessor::getName() const
@@ -236,26 +213,45 @@ const String HPFilterProcessor::getName() const
 
 LPFilterProcessor::LPFilterProcessor()
 {
+	addParameter(m_filterValue = new AudioParameterFloat(
+		"lpf", // parameter ID
+		"LPFilter", // parameter name
+		20.0f,   // minimum value
+		20000.0f,   // maximum value
+		20000.0f)); // default value
 }
 
 void LPFilterProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-	*filter.state = *dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 1000.0f);
+	*m_filter.state = *dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, *m_filterValue);
 
 	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock), 2 };
-	filter.prepare(spec);
+	m_filter.prepare(spec);
 }
 
 void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 {
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
-	filter.process(context);
+	m_filter.process(context);
 }
 
 void LPFilterProcessor::reset()
 {
-	filter.reset();
+	m_filter.reset();
+}
+
+AudioProcessorEditor* LPFilterProcessor::createEditor()
+{
+	auto editor = std::make_unique<LPFilterProcessorEditor>(*this);
+	editor->setSize(50, 60);
+
+	return editor.release();
+}
+
+bool LPFilterProcessor::hasEditor() const
+{
+	return true;
 }
 
 const String LPFilterProcessor::getName() const 

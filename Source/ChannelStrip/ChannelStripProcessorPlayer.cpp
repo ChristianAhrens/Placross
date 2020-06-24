@@ -9,3 +9,13 @@
 */
 
 #include "ChannelStripProcessorPlayer.h"
+
+ChannelStripProcessorPlayer::ChannelStripProcessorPlayer()
+{
+
+}
+
+ChannelStripProcessorPlayer::~ChannelStripProcessorPlayer()
+{
+
+}
