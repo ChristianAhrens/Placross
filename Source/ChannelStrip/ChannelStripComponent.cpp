@@ -1,279 +1,19 @@
 /*
   ==============================================================================
 
-   This file is part of the JUCE tutorials.
-   Copyright (c) 2017 - ROLI Ltd.
-
-   The code included in this file is provided under the terms of the ISC license
-   http://www.isc.org/downloads/software-support-policy/isc-license. Permission
-   To use, copy, modify, and/or distribute this software for any purpose with or
-   without fee is hereby granted provided that the above copyright notice and
-   this permission notice appear in all copies.
-
-   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT ANY WARRANTY, AND ALL WARRANTIES,
-   WHETHER EXPRESSED OR IMPLIED, INCLUDING MERCHANTABILITY AND FITNESS FOR
-   PURPOSE, ARE DISCLAIMED.
+    ChannelStripComponent.cpp
+    Created: 24 Jun 2020 11:52:17am
+    Author:  Christian Ahrens
 
   ==============================================================================
 */
 
 #pragma once
 
-#include "CustomProcessorGraph.h"
+#include "ChannelStripComponent.h"
+#include "ChannelStripProcessor.h"
 
-ProcessorBase::ProcessorBase()
-{
-}
-
-void ProcessorBase::prepareToPlay(double, int)
-{
-}
-
-void ProcessorBase::releaseResources() 
-{
-}
-
-void ProcessorBase::processBlock(AudioSampleBuffer&, MidiBuffer&) 
-{
-}
-
-AudioProcessorEditor* ProcessorBase::createEditor() 
-{
-	return nullptr; 
-}
-
-bool ProcessorBase::hasEditor() const 
-{
-	return false; 
-}
-
-const String ProcessorBase::getName() const 
-{
-	return {}; 
-}
-
-bool ProcessorBase::acceptsMidi() const 
-{
-	return false; 
-}
-
-bool ProcessorBase::producesMidi() const 
-{
-	return false; 
-}
-
-double ProcessorBase::getTailLengthSeconds() const 
-{
-	return 0; 
-}
-
-int ProcessorBase::getNumPrograms() 
-{ 
-	return 0; 
-}
-
-int ProcessorBase::getCurrentProgram() 
-{ 
-	return 0; 
-}
-
-void ProcessorBase::setCurrentProgram(int) 
-{
-}
-
-const String ProcessorBase::getProgramName(int) 
-{ 
-	return {}; 
-}
-
-void ProcessorBase::changeProgramName(int, const String&) 
-{
-}
-
-void ProcessorBase::getStateInformation(MemoryBlock&) 
-{
-}
-
-void ProcessorBase::setStateInformation(const void*, int)
-{
-}
-
-
-OscillatorProcessor30Hz::OscillatorProcessor30Hz()
-{
-	oscillator.setFrequency(30.0f);
-	oscillator.initialise([](float x) { return std::sin(x); });
-}
-
-void OscillatorProcessor30Hz::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock) };
-	oscillator.prepare(spec);
-}
-
-void OscillatorProcessor30Hz::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
-{
-	dsp::AudioBlock<float> block(buffer);
-	dsp::ProcessContextReplacing<float> context(block);
-	oscillator.process(context);
-}
-
-void OscillatorProcessor30Hz::reset()
-{
-	oscillator.reset();
-}
-
-const String OscillatorProcessor30Hz::getName() const 
-{ 
-	return "30HzOscillator"; 
-}
-
-
-OscillatorProcessor440Hz::OscillatorProcessor440Hz()
-{
-	oscillator.setFrequency(440.0f);
-	oscillator.initialise([](float x) { return std::sin(x); });
-}
-
-void OscillatorProcessor440Hz::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock) };
-	oscillator.prepare(spec);
-}
-
-void OscillatorProcessor440Hz::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
-{
-	dsp::AudioBlock<float> block(buffer);
-	dsp::ProcessContextReplacing<float> context(block);
-	oscillator.process(context);
-}
-
-void OscillatorProcessor440Hz::reset()
-{
-	oscillator.reset();
-}
-
-const String OscillatorProcessor440Hz::getName() const 
-{ 
-	return "440HzOscillator"; 
-}
-
-
-OscillatorProcessor2kHz::OscillatorProcessor2kHz()
-{
-	oscillator.setFrequency(2000.0f);
-	oscillator.initialise([](float x) { return std::sin(x); });
-}
-
-void OscillatorProcessor2kHz::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock) };
-	oscillator.prepare(spec);
-}
-
-void OscillatorProcessor2kHz::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
-{
-	dsp::AudioBlock<float> block(buffer);
-	dsp::ProcessContextReplacing<float> context(block);
-	oscillator.process(context);
-}
-
-void OscillatorProcessor2kHz::reset()
-{
-	oscillator.reset();
-}
-
-const String OscillatorProcessor2kHz::getName() const 
-{ 
-	return "2kHzOscillator"; 
-}
-
-
-GainProcessor::GainProcessor()
-{
-	gain.setGainDecibels(-6.0f);
-}
-
-void GainProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock), 2 };
-	gain.prepare(spec);
-}
-
-void GainProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
-{
-	dsp::AudioBlock<float> block(buffer);
-	dsp::ProcessContextReplacing<float> context(block);
-	gain.process(context);
-}
-
-void GainProcessor::reset()
-{
-	gain.reset();
-}
-
-const String GainProcessor::getName() const { return "Gain"; }
-
-
-HPFilterProcessor::HPFilterProcessor() {}
-
-void HPFilterProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	*filter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 1000.0f);
-
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock), 2 };
-	filter.prepare(spec);
-}
-
-void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
-{
-	dsp::AudioBlock<float> block(buffer);
-	dsp::ProcessContextReplacing<float> context(block);
-	filter.process(context);
-}
-
-void HPFilterProcessor::reset()
-{
-	filter.reset();
-}
-
-const String HPFilterProcessor::getName() const
-{ 
-	return "HPFilter"; 
-}
-
-
-LPFilterProcessor::LPFilterProcessor()
-{
-}
-
-void LPFilterProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	*filter.state = *dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 1000.0f);
-
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock), 2 };
-	filter.prepare(spec);
-}
-
-void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
-{
-	dsp::AudioBlock<float> block(buffer);
-	dsp::ProcessContextReplacing<float> context(block);
-	filter.process(context);
-}
-
-void LPFilterProcessor::reset()
-{
-	filter.reset();
-}
-
-const String LPFilterProcessor::getName() const 
-{ 
-	return "LPFilter"; 
-}
-
-
-CustomProcessorGraph::CustomProcessorGraph()
+ChannelStripComponent::ChannelStripComponent()
 	: mainProcessor(new AudioProcessorGraph())
 {
 	addAndMakeVisible(processorSlot1);
@@ -320,7 +60,7 @@ CustomProcessorGraph::CustomProcessorGraph()
 	startTimer(100);
 }
 
-CustomProcessorGraph::~CustomProcessorGraph()
+ChannelStripComponent::~ChannelStripComponent()
 {
 	auto device = MidiInput::getDefaultDevice();
 
@@ -329,12 +69,12 @@ CustomProcessorGraph::~CustomProcessorGraph()
 	deviceManager.removeMidiInputDeviceCallback(device.identifier, &player);
 }
 
-void CustomProcessorGraph::paint(Graphics& g)
+void ChannelStripComponent::paint(Graphics& g)
 {
 	g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
 }
 
-void CustomProcessorGraph::resized()
+void ChannelStripComponent::resized()
 {
 	FlexBox fb;
 	fb.flexDirection = FlexBox::Direction::column;
@@ -358,7 +98,7 @@ void CustomProcessorGraph::resized()
 	fb.performLayout(getLocalBounds().toFloat());
 }
 
-void CustomProcessorGraph::initialiseGraph()
+void ChannelStripComponent::initialiseGraph()
 {
 	mainProcessor->clear();
 
@@ -371,9 +111,9 @@ void CustomProcessorGraph::initialiseGraph()
 	connectMidiNodes();
 }
 
-void CustomProcessorGraph::timerCallback() { updateGraph(); }
+void ChannelStripComponent::timerCallback() { updateGraph(); }
 
-void CustomProcessorGraph::updateGraph()
+void ChannelStripComponent::updateGraph()
 {
 	bool hasChanged = false;
 
@@ -550,14 +290,14 @@ void CustomProcessorGraph::updateGraph()
 	slot4Node = slots.getUnchecked(3);
 }
 
-void CustomProcessorGraph::connectAudioNodes()
+void ChannelStripComponent::connectAudioNodes()
 {
 	for (int channel = 0; channel < 2; ++channel)
 		mainProcessor->addConnection({ { audioInputNode->nodeID,  channel },
 										{ audioOutputNode->nodeID, channel } });
 }
 
-void CustomProcessorGraph::connectMidiNodes()
+void ChannelStripComponent::connectMidiNodes()
 {
 	mainProcessor->addConnection({ { midiInputNode->nodeID,  AudioProcessorGraph::midiChannelIndex },
 									{ midiOutputNode->nodeID, AudioProcessorGraph::midiChannelIndex } });

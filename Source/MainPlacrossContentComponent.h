@@ -1,7 +1,9 @@
 /*
   ==============================================================================
 
-    This file was auto-generated!
+    MainPlacrossContentComponent.h
+    Created: 24 Jun 2020 11:52:17am
+    Author:  Christian Ahrens
 
   ==============================================================================
 */
@@ -10,7 +12,7 @@
 
 #include <JuceHeader.h>
 
-#include "AudioProcessors/CustomProcessorGraph.h"
+#include "ChannelStrip/ChannelStripComponent.h"
 
 //==============================================================================
 /*
@@ -65,8 +67,8 @@ private:
     Label currentPositionLabel;
 
     //==========================================================================
-    CustomProcessorGraph graphComponentL;
-    CustomProcessorGraph graphComponentR;
+    ChannelStripComponent graphComponentL;
+    ChannelStripComponent graphComponentR;
 
     AudioFormatManager formatManager;
     std::unique_ptr<AudioFormatReaderSource> readerSource;
