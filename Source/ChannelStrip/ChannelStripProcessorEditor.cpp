@@ -29,10 +29,6 @@ ProcessorEditorBase::~ProcessorEditorBase()
 {
 }
 
-void ProcessorEditorBase::paint(Graphics& g)
-{
-}
-
 void ProcessorEditorBase::resized()
 {
     FlexBox fb;
@@ -47,35 +43,62 @@ void ProcessorEditorBase::resized()
 
 void ProcessorEditorBase::sliderValueChanged(Slider* slider)
 {
-    processor.setParameter(0, slider->getValue());
+    auto params = processor.getParameters();
+    for (auto p : params)
+    {
+        auto pwi = dynamic_cast<AudioProcessorParameterWithID*>(p);
+        if (pwi && pwi->paramID == slider->getName())
+            p->setValue(static_cast<float>(slider->getValue()));
+    }
+
+    if(auto processorBase = dynamic_cast<ProcessorBase*>(&processor))
+        processorBase->updateParameterValues();
 }
 
 
 GainProcessorEditor::GainProcessorEditor(ProcessorBase& processor)
     : ProcessorEditorBase(processor)
 {
+    s.setName(getProcessorParams().empty() ? "" : getProcessorParams().front().id);
 }
 
 GainProcessorEditor::~GainProcessorEditor()
 {
 }
 
+std::vector<ProcessorEditorBase::ProcessorParam> GainProcessorEditor::getProcessorParams()
+{
+    return std::vector<ProcessorEditorBase::ProcessorParam>{ {"gain", "Gain", 0.0f, 1.0f, 1.0f} };
+}
+
 
 HPFilterProcessorEditor::HPFilterProcessorEditor(ProcessorBase& processor)
     : ProcessorEditorBase(processor)
 {
+    s.setName(getProcessorParams().empty() ? "" : getProcessorParams().front().id);
 }
 
 HPFilterProcessorEditor::~HPFilterProcessorEditor()
 {
 }
 
+std::vector<ProcessorEditorBase::ProcessorParam> HPFilterProcessorEditor::getProcessorParams()
+{
+    return std::vector<ProcessorEditorBase::ProcessorParam>{ {"hpff", "HP filter frequency", 20.0f, 20000.0f, 20.0f} };
+}
+
 
 LPFilterProcessorEditor::LPFilterProcessorEditor(ProcessorBase& processor)
     : ProcessorEditorBase(processor)
 {
+    s.setName(getProcessorParams().empty() ? "" : getProcessorParams().front().id);
 }
 
 LPFilterProcessorEditor::~LPFilterProcessorEditor()
 {
+}
+
+std::vector<ProcessorEditorBase::ProcessorParam> LPFilterProcessorEditor::getProcessorParams()
+{
+    return std::vector<ProcessorEditorBase::ProcessorParam>{ {"lpff", "LP filter frequency", 20.0f, 20000.0f, 20000.0f} };
 }

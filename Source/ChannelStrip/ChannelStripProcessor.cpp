@@ -15,8 +15,12 @@ ProcessorBase::ProcessorBase()
 {
 }
 
-void ProcessorBase::prepareToPlay(double, int)
+void ProcessorBase::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+	m_sampleRate = sampleRate;
+	m_samplesPerBlock = samplesPerBlock;
+
+	updateParameterValues();
 }
 
 void ProcessorBase::releaseResources() 
@@ -111,27 +115,13 @@ double ProcessorBase::getParameterStepWidth(int parameterIndex)
 
 
 GainProcessor::GainProcessor()
+	: ProcessorBase()
 {
-	addParameter(m_gainValue = new AudioParameterFloat(
-		"gain", // parameter ID
-		"Gain", // parameter name
-		0.0f,   // minimum value
-		1.0f,   // maximum value
-		1.0f)); // default value
-
-	m_gain.setGainLinear(*m_gainValue);
-}
-
-void GainProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock), 2 };
-	m_gain.prepare(spec);
+	initParameters();
 }
 
 void GainProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 {
-	m_gain.setGainLinear(*m_gainValue);
-	
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
 	m_gain.process(context);
@@ -155,29 +145,40 @@ bool GainProcessor::hasEditor() const
 	return true;
 }
 
+void GainProcessor::updateParameterValues()
+{
+	m_gain.setGainLinear(getParameters().getUnchecked(m_IdToIdxMap.at("gain"))->getValue());
+
+	dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 2 };
+	m_gain.prepare(spec);
+}
+
 const String GainProcessor::getName() const 
 { 
 	return "Gain"; 
 }
 
-
-HPFilterProcessor::HPFilterProcessor() 
+void GainProcessor::initParameters()
 {
-	addParameter(m_filterValue = new AudioParameterFloat(
-		"hpf", // parameter ID
-		"HPFilter", // parameter name
-		20.0f,   // minimum value
-		20000.0f,   // maximum value
-		20.0f)); // default value
-
+	for (auto param : GainProcessorEditor::getProcessorParams())
+	{
+		auto newAPF = new AudioParameterFloat(
+			param.id,
+			param.name,
+			param.minV,
+			param.maxV,
+			param.defaultV);
+		newAPF->setValueNotifyingHost(param.defaultV);
+		addParameter(newAPF);
+		m_IdToIdxMap.insert(std::make_pair(param.id, newAPF->getParameterIndex()));
+	}
 }
 
-void HPFilterProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	*m_filter.state = *dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, *m_filterValue);
 
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock), 2 };
-	m_filter.prepare(spec);
+HPFilterProcessor::HPFilterProcessor()
+	: ProcessorBase()
+{
+	initParameters();
 }
 
 void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -205,32 +206,45 @@ bool HPFilterProcessor::hasEditor() const
 	return true;
 }
 
+void HPFilterProcessor::updateParameterValues()
+{
+	*m_filter.state = *dsp::IIR::Coefficients<float>::makeHighPass(m_sampleRate, getParameters().getUnchecked(m_IdToIdxMap.at("hpff"))->getValue());
+
+	dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 2 };
+	m_filter.prepare(spec);
+}
+
 const String HPFilterProcessor::getName() const
 { 
 	return "HPFilter"; 
 }
 
-
-LPFilterProcessor::LPFilterProcessor()
+void HPFilterProcessor::initParameters()
 {
-	addParameter(m_filterValue = new AudioParameterFloat(
-		"lpf", // parameter ID
-		"LPFilter", // parameter name
-		20.0f,   // minimum value
-		20000.0f,   // maximum value
-		20000.0f)); // default value
+	for (auto param : HPFilterProcessorEditor::getProcessorParams())
+	{
+		auto newAPF = new AudioParameterFloat(
+			param.id,
+			param.name,
+			param.minV,
+			param.maxV,
+			param.defaultV);
+		newAPF->setValueNotifyingHost(param.defaultV);
+		addParameter(newAPF);
+		m_IdToIdxMap.insert(std::make_pair(param.id, newAPF->getParameterIndex()));
+	}
 }
 
-void LPFilterProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
-{
-	*m_filter.state = *dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, *m_filterValue);
 
-	dsp::ProcessSpec spec{ sampleRate, static_cast<uint32> (samplesPerBlock), 2 };
-	m_filter.prepare(spec);
+LPFilterProcessor::LPFilterProcessor()
+	: ProcessorBase()
+{
+	initParameters();
 }
 
 void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 {
+	return;
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
 	m_filter.process(context);
@@ -254,7 +268,31 @@ bool LPFilterProcessor::hasEditor() const
 	return true;
 }
 
+void LPFilterProcessor::updateParameterValues()
+{
+	*m_filter.state = *dsp::IIR::Coefficients<float>::makeLowPass(m_sampleRate, getParameters().getUnchecked(m_IdToIdxMap.at("lpff"))->getValue());
+	
+	dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 2 };
+	m_filter.prepare(spec);
+}
+
 const String LPFilterProcessor::getName() const 
 { 
 	return "LPFilter"; 
+}
+
+void LPFilterProcessor::initParameters()
+{
+	for (auto param : LPFilterProcessorEditor::getProcessorParams())
+	{
+		auto newAPF = new AudioParameterFloat(
+			param.id,
+			param.name,
+			param.minV,
+			param.maxV,
+			param.defaultV);
+		newAPF->setValueNotifyingHost(param.defaultV);
+		addParameter(newAPF);
+		m_IdToIdxMap.insert(std::make_pair(param.id, newAPF->getParameterIndex()));
+	}
 }

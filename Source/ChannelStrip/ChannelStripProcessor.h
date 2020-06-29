@@ -42,8 +42,18 @@ public:
     void setStateInformation(const void*, int) override;
 
     //==============================================================================
+    virtual void initParameters() = 0;
+    virtual void updateParameterValues() = 0;
+
+    //==============================================================================
     juce::Range<double> getParameterRange(int parameterIndex);
     double getParameterStepWidth(int parameterIndex);
+
+protected:
+    std::map<String, int> m_IdToIdxMap;
+
+    double m_sampleRate{ 48000.0f };
+    int m_samplesPerBlock{ 480 };
 
 private:
     //==============================================================================
@@ -57,7 +67,6 @@ public:
     GainProcessor();
 
     //==============================================================================
-    void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void processBlock (AudioSampleBuffer& buffer, MidiBuffer&) override;
     void reset() override;
 
@@ -65,10 +74,13 @@ public:
     AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
 
+    //==============================================================================
+    void initParameters() override;
+    void updateParameterValues() override;
+
     const String getName() const override;
 
 private:
-    AudioParameterFloat *m_gainValue;
     dsp::Gain<float> m_gain;
 };
 
@@ -79,7 +91,6 @@ public:
     HPFilterProcessor();
 
     //==============================================================================
-    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;
     void reset() override;
 
@@ -87,10 +98,13 @@ public:
     AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
 
+    //==============================================================================
+    void initParameters() override;
+    void updateParameterValues() override;
+
     const String getName() const override;
 
 private:
-    AudioParameterFloat* m_filterValue;
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
 };
 
@@ -101,7 +115,6 @@ public:
     LPFilterProcessor();
 
     //==============================================================================
-    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;
     void reset() override;
 
@@ -109,9 +122,12 @@ public:
     AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
 
+    //==============================================================================
+    void initParameters() override;
+    void updateParameterValues() override;
+
     const String getName() const override;
 
 private:
-    AudioParameterFloat *m_filterValue;
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
 };
