@@ -52,20 +52,27 @@
         {
             if (m_stripComponents.count(i) != 0 && m_stripComponents.at(i))
             {
+                auto ReadPointer = info.buffer->getReadPointer(i) + info.startSample;
+                auto WritePointer = info.buffer->getWritePointer(i) + info.startSample;
                 auto strip = m_stripComponents.at(i).get();
+                strip->audioDeviceIOCallback(&ReadPointer, 1, &WritePointer, 1, info.numSamples);
 
-                info.buffer->applyGainRamp(0, info.numSamples, 0.0f, 1.0f);
-                continue;
-
-                auto ReadPointer = info.buffer->getArrayOfReadPointers();
-                const float** inputChannelData = &ReadPointer[i];
-                int numInputChannels = 1;
-                auto WritePointer = info.buffer->getArrayOfWritePointers();
-                float** outputChannelData = &WritePointer[i];
-                int numOutputChannels = 1;
-                int numSamples = info.numSamples;
-
-                strip->audioDeviceIOCallback(inputChannelData, numInputChannels, outputChannelData, numOutputChannels, numSamples);
+                //AudioBuffer<float> copyBuffer(1, info.numSamples);
+                //auto ReadPointer = info.buffer->getReadPointer(i) + info.startSample;
+                //copyBuffer.copyFrom(0, 0, ReadPointer, info.numSamples);
+                //ReadPointer = copyBuffer.getReadPointer(0);
+                //auto inputChannelData = &ReadPointer;
+                //
+                //auto WritePointer = info.buffer->getWritePointer(i) + info.startSample;
+                //auto outputChannelData = &WritePointer;
+                //
+                //printSampleBlock(*inputChannelData, info.numSamples, 5);
+                //
+                //auto strip = m_stripComponents.at(i).get();
+                //strip->audioDeviceIOCallback(inputChannelData, 1, outputChannelData, 1, info.numSamples);
+                //
+                //printSampleBlock(*outputChannelData, info.numSamples, 5);
+                //DBG("");
             }
         }
     }

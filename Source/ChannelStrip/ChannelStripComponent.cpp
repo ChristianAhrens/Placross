@@ -14,11 +14,7 @@
 ChannelStripComponent::ChannelStripComponent()
 	: m_mainProcessor(new AudioProcessorGraph())
 {
-	m_mainProcessor->enableAllBuses();
-
 	initialiseGraph();
-
-	m_player.setProcessor(m_mainProcessor.get());
 
 	setSize(600, 460);
 }
@@ -59,9 +55,9 @@ void ChannelStripComponent::resized()
 void ChannelStripComponent::initialiseGraph()
 {
 	m_mainProcessor->clear();
-
-	m_audioInputNode = m_mainProcessor->addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
-	m_audioOutputNode = m_mainProcessor->addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
+	m_mainProcessor->enableAllBuses();
+	m_player.setProcessor(m_mainProcessor.get());
+	m_mainProcessor->setPlayConfigDetails(1, 1, m_mainProcessor->getSampleRate(), m_mainProcessor->getBlockSize());
 
 	createAudioNodes();
 	connectAudioNodes();
@@ -69,66 +65,59 @@ void ChannelStripComponent::initialiseGraph()
 
 void ChannelStripComponent::createAudioNodes()
 {
+	m_audioInputNode = m_mainProcessor->addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
+
 	Node::Ptr HPFnode = m_mainProcessor->addNode(std::make_unique<HPFilterProcessor>());
 	if (HPFnode != nullptr)
 	{
 		addAndMakeVisible(HPFnode->getProcessor()->createEditorIfNeeded());
-		HPFnode->getProcessor()->setPlayConfigDetails(1, 1,
+		HPFnode->getProcessor()->setPlayConfigDetails(
+			m_mainProcessor->getNumInputChannels(), 
+			m_mainProcessor->getNumOutputChannels(),
 			m_mainProcessor->getSampleRate(),
 			m_mainProcessor->getBlockSize());
 		HPFnode->getProcessor()->enableAllBuses();
 	}
+
 	Node::Ptr LPFnode = m_mainProcessor->addNode(std::make_unique<LPFilterProcessor>());
 	if (LPFnode != nullptr)
 	{
 		addAndMakeVisible(LPFnode->getProcessor()->createEditorIfNeeded());
-		LPFnode->getProcessor()->setPlayConfigDetails(1, 1,
+		LPFnode->getProcessor()->setPlayConfigDetails(
+			m_mainProcessor->getNumInputChannels(),
+			m_mainProcessor->getNumOutputChannels(),
 			m_mainProcessor->getSampleRate(),
 			m_mainProcessor->getBlockSize());
 		LPFnode->getProcessor()->enableAllBuses();
 	}
+
 	Node::Ptr Gainnode = m_mainProcessor->addNode(std::make_unique<GainProcessor>());
 	if (Gainnode != nullptr)
 	{
 		addAndMakeVisible(Gainnode->getProcessor()->createEditorIfNeeded());
-		Gainnode->getProcessor()->setPlayConfigDetails(1, 1,
+		Gainnode->getProcessor()->setPlayConfigDetails(
+			m_mainProcessor->getNumInputChannels(),
+			m_mainProcessor->getNumOutputChannels(),
 			m_mainProcessor->getSampleRate(),
 			m_mainProcessor->getBlockSize());
 		Gainnode->getProcessor()->enableAllBuses();
 	}
+
+	m_audioOutputNode = m_mainProcessor->addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
 }
 
 void ChannelStripComponent::connectAudioNodes()
 {
 	ReferenceCountedArray<Node> activeNodes = m_mainProcessor->getNodes();
 
-	if ((/*allbypassed*/false))
-	{
-		for (int channel = 0; channel < m_mainProcessor->getMainBusNumInputChannels(); ++channel)
-			m_mainProcessor->addConnection({ { m_audioInputNode->nodeID,  channel },
-											{ m_audioOutputNode->nodeID, channel } });
-	}
-	else
-	{
-		// setup the interconnects of the nodes (this is not done in the loop above, since it relies on the node and ++node already being inited properly)
-		for (int i = 0; i < activeNodes.size() - 1; ++i)
-		{
-			for (int channel = 0; channel < m_mainProcessor->getMainBusNumInputChannels(); ++channel)
-				m_mainProcessor->addConnection({ { activeNodes.getUnchecked(i)->nodeID,      channel },
-												{ activeNodes.getUnchecked(i + 1)->nodeID,  channel } });
-		}
+	jassert(activeNodes.getFirst() == m_audioInputNode);
+	jassert(activeNodes.getLast() == m_audioOutputNode);
 
-		// finally setup the connections to input- and outputnode
+	for (int i = 0; i < activeNodes.size() - 1; ++i)
+	{
 		for (int channel = 0; channel < m_mainProcessor->getMainBusNumInputChannels(); ++channel)
-		{
-			m_mainProcessor->addConnection({ { m_audioInputNode->nodeID,         channel },
-											{ activeNodes.getFirst()->nodeID, channel } });
-		}
-		for (int channel = 0; channel < m_mainProcessor->getMainBusNumOutputChannels(); ++channel)
-		{
-			m_mainProcessor->addConnection({ { activeNodes.getLast()->nodeID,  channel },
-											{ m_audioOutputNode->nodeID,        channel } });
-		}
+			m_mainProcessor->addConnection({ { activeNodes.getUnchecked(i)->nodeID,      channel },
+											{ activeNodes.getUnchecked(i + 1)->nodeID,  channel } });
 	}
 }
 

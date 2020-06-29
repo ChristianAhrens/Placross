@@ -18,10 +18,11 @@ class ChannelStripProcessorPlayer : public AudioProcessorPlayer
 public:
     //==============================================================================
     ChannelStripProcessorPlayer();
-
     ~ChannelStripProcessorPlayer() override;
 
-
+    void audioDeviceIOCallback(const float**, int, float**, int, int) override;
+    void audioDeviceAboutToStart(AudioIODevice*) override;
+    void audioDeviceStopped() override;
 
 private:
     //==============================================================================

@@ -130,8 +130,8 @@ void GainProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 
 void GainProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 {
-	m_gain.setGainDecibels(*m_gainValue);
-
+	m_gain.setGainLinear(*m_gainValue);
+	
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
 	m_gain.process(context);
