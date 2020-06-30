@@ -185,9 +185,9 @@
 
     void AudioPlayerComponent::openButtonClicked()
     {
-        FileChooser chooser ("Select a Wave file to play...",
+        FileChooser chooser ("Select an audio file to play...",
                              {},
-                             "*.wav");
+                             "*");
 
         if (chooser.browseForFileToOpen())
         {

@@ -336,9 +336,6 @@ public:
         else
             slider.setRange(rangeMin, rangeMax);
 
-        auto val = (defaultVal - rangeMin) / ((rangeMax - rangeMin) > 0 ? (rangeMax - rangeMin) : 1);
-        slider.setValue(val);
-
         addAndMakeVisible(slider);
 
         // Set the initial value.
@@ -366,7 +363,16 @@ private:
     {
         if (!isDragging)
         {
-            slider.setValue(getParameter().getValue(), dontSendNotification);
+            auto defaultVal = 1.0f;
+            auto param = &getParameter();
+
+            auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+            if (fParam)
+                defaultVal = *fParam;
+            else
+                defaultVal = param->getValue();
+            
+            slider.setValue(defaultVal, dontSendNotification);
         }
     }
 
