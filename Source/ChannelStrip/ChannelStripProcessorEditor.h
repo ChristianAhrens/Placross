@@ -12,81 +12,23 @@
 
 #include <JuceHeader.h>
 
-class ProcessorBase;
-
-//==============================================================================
-class ProcessorEditorBase : public AudioProcessorEditor, 
-                            public Slider::Listener
+class  ChannelStripProcessorEditor : public AudioProcessorEditor
 {
 public:
-    struct ProcessorParam
-    {
-        ProcessorParam(String i, String n, float min, float max, float def)
-        {
-            id = i;
-            name = n;
-            minV = min;
-            maxV = max;
-            defaultV = def;
-        }
-
-        String id;      // parameter ID
-        String name;    // parameter name
-        float minV;     // minimum value
-        float maxV;     // maximum value
-        float defaultV; // default value
-    };
-
-public:
-    ProcessorEditorBase(ProcessorBase& processor);
-    virtual ~ProcessorEditorBase();
+    //==============================================================================
+    ChannelStripProcessorEditor(AudioProcessor&);
+    ~ChannelStripProcessorEditor() override;
 
     //==============================================================================
     void resized() override;
 
+    // This constructor has been changed to take a reference instead of a pointer
+    JUCE_DEPRECATED_WITH_BODY(ChannelStripProcessorEditor(AudioProcessor* p), : ChannelStripProcessorEditor(*p) {})
+
+private:
     //==============================================================================
-    void sliderValueChanged(Slider* slider) override;
+    struct Pimpl;
+    std::unique_ptr<Pimpl> pimpl;
 
-protected:
-    Label l;
-    Slider s;
-
-private:
-
-};
-
-//==============================================================================
-class GainProcessorEditor  : public ProcessorEditorBase
-{
-public:
-    GainProcessorEditor(ProcessorBase& processor);
-    ~GainProcessorEditor() override;
-
-    static std::vector<ProcessorEditorBase::ProcessorParam> getProcessorParams();
-
-private:
-};
-
-//==============================================================================
-class HPFilterProcessorEditor  : public ProcessorEditorBase
-{
-public:
-    HPFilterProcessorEditor(ProcessorBase& processor);
-    ~HPFilterProcessorEditor() override;
-
-    static std::vector<ProcessorEditorBase::ProcessorParam> getProcessorParams();
-
-private:
-};
-
-//==============================================================================
-class LPFilterProcessorEditor : public ProcessorEditorBase
-{
-public:
-    LPFilterProcessorEditor(ProcessorBase& processor);
-    ~LPFilterProcessorEditor() override;
-
-    static std::vector<ProcessorEditorBase::ProcessorParam> getProcessorParams();
-
-private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChannelStripProcessorEditor)
 };

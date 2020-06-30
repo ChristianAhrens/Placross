@@ -22,7 +22,7 @@
             addAndMakeVisible(m_stripComponents.at(i).get());
         }
 
-        setSize (300, 500);
+        setSize (300, 520);
 
         // Specify the number of output channels that we want to open
         setAudioChannels (0, m_playerComponent->getCurrentChannelCount());

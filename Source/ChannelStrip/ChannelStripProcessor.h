@@ -13,8 +13,28 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-class ProcessorBase  : public AudioProcessor
+class ProcessorBase  : public AudioProcessor, public AudioProcessorParameter::Listener
 {
+public:
+    struct ProcessorParam
+    {
+        ProcessorParam(String i, String n, float min, float max, float def)
+        {
+            id = i;
+            name = n;
+            minV = min;
+            maxV = max;
+            defaultV = def;
+        }
+
+        String id;      // parameter ID
+        String name;    // parameter name
+        float minV;     // minimum value
+        float maxV;     // maximum value
+        float defaultV; // default value
+    };
+    virtual std::vector<ProcessorBase::ProcessorParam> getProcessorParams() = 0;
+
 public:
     //==============================================================================
     ProcessorBase();
@@ -42,12 +62,19 @@ public:
     void setStateInformation(const void*, int) override;
 
     //==============================================================================
-    virtual void initParameters() = 0;
+    void initParameters();
     virtual void updateParameterValues() = 0;
 
     //==============================================================================
-    juce::Range<double> getParameterRange(int parameterIndex);
-    double getParameterStepWidth(int parameterIndex);
+    AudioProcessorEditor* createEditor() override;
+    bool hasEditor() const override;
+
+    //==============================================================================
+    virtual void parameterValueChanged(int parameterIndex, float newValue) override = 0;
+    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override;
+
+    static float getMappedValue(AudioProcessorParameter* param);
+    static float getNormalizedValue(AudioProcessorParameter* param);
 
 protected:
     std::map<String, int> m_IdToIdxMap;
@@ -71,14 +98,12 @@ public:
     void reset() override;
 
     //==============================================================================
-    AudioProcessorEditor* createEditor() override;
-    bool hasEditor() const override;
-
-    //==============================================================================
-    void initParameters() override;
+    void parameterValueChanged(int parameterIndex, float newValue) override;
     void updateParameterValues() override;
 
     const String getName() const override;
+
+    std::vector<ProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
     dsp::Gain<float> m_gain;
@@ -95,14 +120,12 @@ public:
     void reset() override;
 
     //==============================================================================
-    AudioProcessorEditor* createEditor() override;
-    bool hasEditor() const override;
-
-    //==============================================================================
-    void initParameters() override;
+    void parameterValueChanged(int parameterIndex, float newValue) override;
     void updateParameterValues() override;
 
     const String getName() const override;
+
+    std::vector<ProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
@@ -119,14 +142,12 @@ public:
     void reset() override;
 
     //==============================================================================
-    AudioProcessorEditor* createEditor() override;
-    bool hasEditor() const override;
-
-    //==============================================================================
-    void initParameters() override;
+    void parameterValueChanged(int parameterIndex, float newValue) override;
     void updateParameterValues() override;
 
     const String getName() const override;
+
+    std::vector<ProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
