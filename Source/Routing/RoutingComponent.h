@@ -12,15 +12,20 @@
 
 #include <JuceHeader.h>
 
+#include "RoutingEditorComponent.h"
+
 //==============================================================================
 class RoutingComponent  :   public Component,
                             public DrawableButton::Listener,
-                            public AudioIODeviceCallback
+                            public AudioIODeviceCallback,
+                            public RoutingEditorComponent::Listener
 {
 public:
     //==============================================================================
     RoutingComponent();
     ~RoutingComponent() override;
+
+    void setIOCount(int inputChannelCount, int outputChannelCount);
 
     //==============================================================================
     void paint (Graphics& g) override;
@@ -39,12 +44,27 @@ public:
     void audioDeviceStopped() override;
     void audioDeviceError(const juce::String &errorMessage) override;
 
+    //==============================================================================
+    void onRoutingEditingFinished(std::multimap<int, int> const& newRouting) override;
+    void toggleEditor() override;
+
 private:
     //==============================================================================
     void initialiseRouting();
 
     //==============================================================================
     std::unique_ptr<DrawableButton> m_sumButton;
+
+    //==============================================================================
+    std::unique_ptr<RoutingEditorComponent> m_editor;
+
+    //==============================================================================
+    int m_inputChannelCount{ 0 };
+    int m_outputChannelCount{ 0 };
+
+    std::multimap<int, int>  m_routingMap{};
+
+    CriticalSection routingLock;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RoutingComponent)

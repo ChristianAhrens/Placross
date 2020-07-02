@@ -12,18 +12,32 @@
         <FILE id="MYv4L2" name="cello.wav" compile="0" resource="1" file="Resources/Testdata/cello.wav"/>
       </GROUP>
       <GROUP id="{144740AA-81D3-FDC9-D0C6-0AFE45ACA594}" name="Images">
+        <FILE id="jR0mkB" name="close_fullscreen-24px.svg" compile="0" resource="1"
+              file="Resources/Images/close_fullscreen-24px.svg"/>
         <FILE id="d9Drh8" name="mediation-24px.svg" compile="0" resource="1"
               file="Resources/Images/mediation-24px.svg"/>
         <FILE id="o5e5OQ" name="Placross.png" compile="0" resource="1" file="Resources/Images/Placross.png"/>
         <FILE id="N4Vst6" name="Placross.xcf" compile="0" resource="1" file="Resources/Images/Placross.xcf"/>
+        <FILE id="wo5JtT" name="radio_button_checked-24px.svg" compile="0"
+              resource="1" file="Resources/Images/radio_button_checked-24px.svg"/>
+        <FILE id="Sqkl9k" name="radio_button_unchecked-24px.svg" compile="0"
+              resource="1" file="Resources/Images/radio_button_unchecked-24px.svg"/>
       </GROUP>
     </GROUP>
     <GROUP id="{0480E33C-041F-2346-F9AA-44BBEAD80CFE}" name="Source">
+      <FILE id="Jmt6NZ" name="OverlayEditorComponentBase.cpp" compile="1"
+            resource="0" file="Source/OverlayEditorComponentBase.cpp"/>
+      <FILE id="IruU8J" name="OverlayEditorComponentBase.h" compile="0" resource="0"
+            file="Source/OverlayEditorComponentBase.h"/>
       <GROUP id="{6E7706A6-E68A-010C-A28E-4D2B70FE95DB}" name="Routing">
         <FILE id="G0pPlU" name="RoutingComponent.cpp" compile="1" resource="0"
               file="Source/Routing/RoutingComponent.cpp"/>
         <FILE id="CjxfI0" name="RoutingComponent.h" compile="0" resource="0"
               file="Source/Routing/RoutingComponent.h"/>
+        <FILE id="fpDus3" name="RoutingEditorComponent.cpp" compile="1" resource="0"
+              file="Source/Routing/RoutingEditorComponent.cpp"/>
+        <FILE id="pS2HHJ" name="RoutingEditorComponent.h" compile="0" resource="0"
+              file="Source/Routing/RoutingEditorComponent.h"/>
       </GROUP>
       <GROUP id="{B347140A-09FE-C200-A05B-EE5DD62B9DC9}" name="AudioPlayer">
         <FILE id="FxUrhR" name="AudioPlayerComponent.cpp" compile="1" resource="0"

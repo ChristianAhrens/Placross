@@ -1,0 +1,113 @@
+/*
+  ==============================================================================
+
+    RoutingEditorComponent.cpp
+    Created: 2 Jul 2020 11:32:30am
+    Author:  musah
+
+  ==============================================================================
+*/
+
+#include "RoutingEditorComponent.h"
+
+RoutingEditorComponent::RoutingEditorComponent(int RoutingInputChannelCount, int RoutingOutputChannelCount)
+    : OverlayEditorComponentBase()
+{
+    m_inputChannelCount = RoutingInputChannelCount;
+    m_outputChannelCount = RoutingOutputChannelCount;
+
+    for (int i = 0; i < m_inputChannelCount; ++i)
+    {
+        for (int j = 0; j < m_outputChannelCount; ++j)
+        {
+            m_routingMap.insert(std::make_pair(i, j));
+        }
+    }
+
+    for (int i = 0; i < m_inputChannelCount; ++i)
+    {
+        auto label = std::make_unique<Label>();
+        label->setText(String(i + 1), dontSendNotification);
+        addAndMakeVisible(label.get());
+        m_inputLabels.push_back(std::move(label));
+    }
+
+    for (int j = 0; j < m_outputChannelCount; ++j)
+    {
+        auto label = std::make_unique<Label>();
+        label->setText(String(j + 1), dontSendNotification);
+        addAndMakeVisible(label.get());
+        m_outputLabels.push_back(std::move(label));
+    }
+
+    // create svg images from resources for regular state
+    std::unique_ptr<XmlElement> Node_normal_svg_xml = XmlDocument::parse(BinaryData::radio_button_unchecked24px_svg);
+    std::unique_ptr<juce::Drawable> drawableNodeNormalImage = Drawable::createFromSVG(*(Node_normal_svg_xml.get()));
+    drawableNodeNormalImage->replaceColour(Colours::black, Colours::white);
+    std::unique_ptr<juce::Drawable> drawableNodeOverImage = Drawable::createFromSVG(*(Node_normal_svg_xml.get()));
+    drawableNodeOverImage->replaceColour(Colours::black, Colours::lightgrey);
+    std::unique_ptr<juce::Drawable> drawableNodeDownImage = Drawable::createFromSVG(*(Node_normal_svg_xml.get()));
+    drawableNodeDownImage->replaceColour(Colours::black, Colours::grey);
+    // create svg images from resources for ON state
+    std::unique_ptr<XmlElement> Node_ON_svg_xml = XmlDocument::parse(BinaryData::radio_button_checked24px_svg);
+    std::unique_ptr<juce::Drawable> drawableNodeNormalOnImage = Drawable::createFromSVG(*(Node_ON_svg_xml.get()));
+    drawableNodeNormalOnImage->replaceColour(Colours::black, Colours::white);
+    std::unique_ptr<juce::Drawable> drawableNodeOverOnImage = Drawable::createFromSVG(*(Node_ON_svg_xml.get()));
+    drawableNodeOverOnImage->replaceColour(Colours::black, Colours::lightgrey);
+    std::unique_ptr<juce::Drawable> drawableNodeDownOnImage = Drawable::createFromSVG(*(Node_ON_svg_xml.get()));
+    drawableNodeDownOnImage->replaceColour(Colours::black, Colours::grey);
+    
+    for (int i = 0; i < m_inputChannelCount; ++i)
+    {
+        std::vector<std::unique_ptr<DrawableButton>> v;
+        for (int j = 0; j < m_outputChannelCount; ++j)
+        {
+            auto drawableButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
+            drawableButton->setClickingTogglesState(true);
+            drawableButton->setImages(drawableNodeNormalImage.get(), drawableNodeOverImage.get(), drawableNodeDownImage.get(), nullptr, drawableNodeNormalOnImage.get(), drawableNodeOverOnImage.get(), drawableNodeDownOnImage.get(), nullptr);
+            addAndMakeVisible(drawableButton.get());
+            v.push_back(std::move(drawableButton));
+        }
+        m_nodeButtons.push_back(std::move(v));
+    }
+}
+
+std::multimap<int, int> const& RoutingEditorComponent::getRouting()
+{
+    return m_routingMap;
+}
+
+void RoutingEditorComponent::paint(Graphics& g)
+{
+    OverlayEditorComponentBase::paint(g);
+}
+
+void RoutingEditorComponent::resized()
+{
+    OverlayEditorComponentBase::resized();
+
+    Grid grid;
+    grid.alignItems = Grid::AlignItems::center;
+    grid.alignContent = Grid::AlignContent::center;
+    
+    grid.templateColumns.add(Grid::TrackInfo(1_fr));
+    grid.templateRows.add(Grid::TrackInfo(1_fr));
+    grid.items.add(GridItem());
+    for (int i = 0; i < m_inputChannelCount; ++i)
+    {
+        grid.templateColumns.add(Grid::TrackInfo(1_fr));
+        grid.items.add(GridItem(*m_inputLabels.at(i)));
+    }
+
+    for (int j = 0; j < m_outputChannelCount; ++j)
+    {
+        grid.templateRows.add(Grid::TrackInfo(1_fr));
+        grid.items.add(GridItem(*m_outputLabels.at(j)));
+        for (int k = 0; k < m_inputChannelCount; ++k)
+        {
+            grid.items.add(GridItem(*m_nodeButtons.at(k).at(j)));
+        }
+    }
+
+    grid.performLayout(getLocalBounds().reduced(10));
+}
