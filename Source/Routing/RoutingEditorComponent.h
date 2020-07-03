@@ -21,6 +21,7 @@ public:
     //==============================================================================
     RoutingEditorComponent(int RoutingInputChannelCount, int RoutingOutputChannelCount);
 
+    void setRouting(std::multimap<int, int> const& routingMap);
     std::multimap<int, int> const& getRouting();
 
     //==============================================================================

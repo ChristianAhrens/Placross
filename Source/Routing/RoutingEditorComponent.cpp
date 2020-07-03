@@ -72,8 +72,65 @@ RoutingEditorComponent::RoutingEditorComponent(int RoutingInputChannelCount, int
     }
 }
 
+void RoutingEditorComponent::setRouting(std::multimap<int, int> const& routingMap)
+{
+    m_routingMap = routingMap;
+
+    if (m_inputChannelCount == m_nodeButtons.size())
+    {
+        for (int in = 0; in < m_inputChannelCount; ++in)
+        {
+            if (m_outputChannelCount == m_nodeButtons[in].size())
+            {
+                auto range = m_routingMap.equal_range(in);
+                std::unordered_set<int> activeOuts;
+                for (auto rit = range.first; rit != range.second; rit++)
+                    activeOuts.insert(rit->second);
+                for (int out = 0; out < m_outputChannelCount; ++out)
+                {
+                    if (m_routingMap.count(in) > 0 && activeOuts.count(out) > 0)
+                    {
+                        m_nodeButtons[in][out]->setToggleState(true, dontSendNotification);
+                    }
+                    else
+                    {
+                        m_nodeButtons[in][out]->setToggleState(false, dontSendNotification);
+                    }
+                }
+            }
+            else
+                jassertfalse;
+        }
+    }
+    else
+        jassertfalse;
+}
+
 std::multimap<int, int> const& RoutingEditorComponent::getRouting()
 {
+    m_routingMap.clear();
+
+    if (m_inputChannelCount == m_nodeButtons.size())
+    {
+        for (int i = 0; i < m_inputChannelCount; ++i)
+        {
+            if (m_outputChannelCount == m_nodeButtons[i].size())
+            {
+                for (int j = 0; j < m_outputChannelCount; ++j)
+                {
+                    if (m_nodeButtons[i][j]->getToggleState())
+                    {
+                        m_routingMap.insert(std::make_pair(i, j));
+                    }
+                }
+            }
+            else
+                jassertfalse;
+        }
+    }
+    else
+        jassertfalse;
+
     return m_routingMap;
 }
 
@@ -102,7 +159,7 @@ void RoutingEditorComponent::resized()
     grid.items.add(GridItem());
     for (int i = 0; i < m_inputChannelCount; ++i)
     {
-        m_inputLabels.at(i)->setTransform(AffineTransform::rotation(MathConstants<float>::halfPi, xPos + matrixNodeSize*(i+1), yPos + matrixNodeSize).translated(0, -matrixNodeSize));
+        m_inputLabels.at(i)->setTransform(AffineTransform::rotation(-MathConstants<float>::halfPi, xPos + matrixNodeSize*(i+1), yPos + matrixNodeSize).translated(matrixNodeSize, 0));
 
         grid.templateColumns.add(Grid::TrackInfo(1_fr));
         grid.items.add(GridItem(*m_inputLabels.at(i)));

@@ -157,6 +157,7 @@ void RoutingComponent::toggleEditor()
         else
         {
             m_editor = std::make_unique<RoutingEditorComponent>(m_inputChannelCount, m_outputChannelCount);
+            m_editor->setRouting(m_routingMap);
             m_editor->addListener(this);
             parent->addAndMakeVisible(m_editor.get());
             resized();
