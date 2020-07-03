@@ -27,7 +27,7 @@ RoutingEditorComponent::RoutingEditorComponent(int RoutingInputChannelCount, int
     for (int i = 0; i < m_inputChannelCount; ++i)
     {
         auto label = std::make_unique<Label>();
-        label->setText(String(i + 1), dontSendNotification);
+        label->setText("In " + String(i + 1), dontSendNotification);
         addAndMakeVisible(label.get());
         m_inputLabels.push_back(std::move(label));
     }
@@ -35,7 +35,7 @@ RoutingEditorComponent::RoutingEditorComponent(int RoutingInputChannelCount, int
     for (int j = 0; j < m_outputChannelCount; ++j)
     {
         auto label = std::make_unique<Label>();
-        label->setText(String(j + 1), dontSendNotification);
+        label->setText("Out " + String(j + 1), dontSendNotification);
         addAndMakeVisible(label.get());
         m_outputLabels.push_back(std::move(label));
     }
@@ -86,6 +86,13 @@ void RoutingEditorComponent::resized()
 {
     OverlayEditorComponentBase::resized();
 
+    auto matrixNodeSize = 40;
+    auto matrixWidth = (m_inputChannelCount + 1) * matrixNodeSize;
+    auto matrixHeight = (m_outputChannelCount + 1) * matrixNodeSize;
+    auto xPos = 0.5f * (getWidth() - matrixWidth) - (0.5f * matrixNodeSize);
+    auto yPos = 0.5f * (getHeight() - matrixHeight) - (0.5f * matrixNodeSize);
+    Rectangle<int> gridRect(xPos, yPos, matrixWidth, matrixHeight);
+
     Grid grid;
     grid.alignItems = Grid::AlignItems::center;
     grid.alignContent = Grid::AlignContent::center;
@@ -95,6 +102,8 @@ void RoutingEditorComponent::resized()
     grid.items.add(GridItem());
     for (int i = 0; i < m_inputChannelCount; ++i)
     {
+        m_inputLabels.at(i)->setTransform(AffineTransform::rotation(MathConstants<float>::halfPi, xPos + matrixNodeSize*(i+1), yPos + matrixNodeSize).translated(0, -matrixNodeSize));
+
         grid.templateColumns.add(Grid::TrackInfo(1_fr));
         grid.items.add(GridItem(*m_inputLabels.at(i)));
     }
@@ -109,5 +118,5 @@ void RoutingEditorComponent::resized()
         }
     }
 
-    grid.performLayout(getLocalBounds().reduced(10));
+    grid.performLayout(gridRect);
 }
