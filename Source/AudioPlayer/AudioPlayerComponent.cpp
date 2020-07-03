@@ -51,7 +51,10 @@
 
     int AudioPlayerComponent::getCurrentChannelCount()
     {
-        return 2; // tmp debug return
+        if (readerSource && readerSource->getAudioFormatReader())
+            return readerSource->getAudioFormatReader()->numChannels;
+        else
+            return 2;
     }
 
     void AudioPlayerComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
@@ -147,6 +150,11 @@
         }
     }
 
+    void AudioPlayerComponent::addListener(Listener* l)
+    {
+        m_listener = l;
+    }
+
     void AudioPlayerComponent::updateLoopState (bool shouldLoop)
     {
         if (readerSource.get() != nullptr)
@@ -196,10 +204,13 @@
 
             if (reader != nullptr)
             {
-                std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (reader, true));
-                transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate);
+                std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (reader, true));                
+                transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate, reader->numChannels);
                 playButton.setEnabled (true);
                 readerSource.reset (newSource.release());
+
+                if (m_listener)
+                    m_listener->onNewAudiofileLoaded();
             }
         }
     }

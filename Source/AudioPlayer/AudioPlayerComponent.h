@@ -22,6 +22,13 @@ class AudioPlayerComponent   :  public Component,
                                 public Timer
 {
 public:
+    class Listener
+    {
+    public:
+        virtual void onNewAudiofileLoaded() = 0;
+    };
+
+public:
     AudioPlayerComponent();
     ~AudioPlayerComponent() override;
 
@@ -40,7 +47,9 @@ public:
     
     //==========================================================================
     void timerCallback() override;
-    
+
+    //==========================================================================
+    void addListener(Listener* l);
     void updateLoopState (bool shouldLoop);
 
 private:
@@ -58,6 +67,9 @@ private:
     void playButtonClicked();
     void stopButtonClicked();
     void loopButtonChanged();
+
+    //==========================================================================
+    Listener* m_listener{ nullptr };
 
     //==========================================================================
     TextButton openButton;

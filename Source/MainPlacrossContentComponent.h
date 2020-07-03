@@ -21,11 +21,16 @@
     This component lives inside our window, and this is where you should put all
     your controls and content.
 */
-class MainPlacrossContentComponent   : public AudioAppComponent
+class MainPlacrossContentComponent   :  public AudioAppComponent,
+                                        public AudioPlayerComponent::Listener
 {
 public:
     MainPlacrossContentComponent();
     ~MainPlacrossContentComponent() override;
+
+    void setChannelSetup(int numInputChannels, int numOutputChannels, const XmlElement* const storedSettings = nullptr);
+
+    std::pair<int, int> getCurrentDeviceChannelCount();
 
     //==========================================================================
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
@@ -34,6 +39,9 @@ public:
     
     //==========================================================================
     void resized() override;
+
+    //==========================================================================
+    void onNewAudiofileLoaded() override;
 
 private:
     //==========================================================================

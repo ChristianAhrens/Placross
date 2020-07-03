@@ -14,21 +14,16 @@
     MainPlacrossContentComponent::MainPlacrossContentComponent()
     {
         m_playerComponent = std::make_unique<AudioPlayerComponent>();
+        m_playerComponent->addListener(this);
         addAndMakeVisible(m_playerComponent.get());
 
         m_routingComponent = std::make_unique<RoutingComponent>();
         addAndMakeVisible(m_routingComponent.get());
 
-        for (auto i = 0; i < m_playerComponent->getCurrentChannelCount(); ++i)
-        {
-            m_stripComponents[i] = std::make_unique<ChannelStripComponent>();
-            addAndMakeVisible(m_stripComponents.at(i).get());
-        }
-
-        setSize (300, 550);
-
         // Specify the number of output channels that we want to open
-        setAudioChannels (0, m_playerComponent->getCurrentChannelCount());
+        setChannelSetup(m_playerComponent->getCurrentChannelCount(), getCurrentDeviceChannelCount().second);
+
+        setSize(300, 550);
     }
 
     MainPlacrossContentComponent::~MainPlacrossContentComponent()
@@ -98,3 +93,41 @@
         fb.performLayout(getLocalBounds().toFloat());
     }
 
+    void MainPlacrossContentComponent::onNewAudiofileLoaded()
+    {
+        setChannelSetup(m_playerComponent->getCurrentChannelCount(), getCurrentDeviceChannelCount().second);
+    }
+
+    void MainPlacrossContentComponent::setChannelSetup(int numInputChannels, int numOutputChannels, const XmlElement* const storedSettings)
+    {
+        for (auto i = 0; i < numOutputChannels; ++i)
+        {
+            if (m_stripComponents.count(i) == 0)
+            {
+                m_stripComponents[i] = std::make_unique<ChannelStripComponent>();
+                addAndMakeVisible(m_stripComponents.at(i).get());
+            }
+        }
+
+        m_routingComponent->setIOCount(numInputChannels, numOutputChannels);
+
+        // for our baseclass, the audio device in/out count is relevant. Since we only use playback, inputs are always 0 here!
+        setAudioChannels(0, numOutputChannels, storedSettings);
+    }
+
+    std::pair<int, int> MainPlacrossContentComponent::getCurrentDeviceChannelCount()
+    {
+        if(deviceManager.getCurrentAudioDevice())
+        {
+            auto activeInputChannels = deviceManager.getCurrentAudioDevice()->getActiveInputChannels();
+            auto activeOutputChannels = deviceManager.getCurrentAudioDevice()->getActiveOutputChannels();
+            auto maxInputChannels = activeInputChannels.getHighestBit() + 1;
+            auto maxOutputChannels = activeOutputChannels.getHighestBit() + 1;
+
+            return std::make_pair(maxInputChannels, maxOutputChannels);
+        }
+        else
+        {
+            return std::make_pair(2, 2);
+        }
+    }
