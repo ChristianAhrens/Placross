@@ -68,6 +68,9 @@ public:
             setUsingNativeTitleBar (true);
             setContentOwned (new MainPlacrossContentComponent(), true);
 
+            // fix for unclear issue regarding black DrawableButton background in ON state
+            getLookAndFeel().setColour(DrawableButton::backgroundOnColourId, Colours::transparentWhite);
+
            #if JUCE_IOS || JUCE_ANDROID
             setFullScreen (true);
            #else
