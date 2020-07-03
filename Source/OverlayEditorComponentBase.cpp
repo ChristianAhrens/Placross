@@ -36,12 +36,12 @@ OverlayEditorComponentBase::OverlayEditorComponentBase()
 
 OverlayEditorComponentBase::~OverlayEditorComponentBase()
 {
-	m_listener = nullptr;
+	m_overlayListener = nullptr;
 }
 
-void OverlayEditorComponentBase::addListener(Listener *l)
+void OverlayEditorComponentBase::addOverlayListener(OverlayListener *l)
 {
-	m_listener = l;
+    m_overlayListener = l;
 }
 
 void OverlayEditorComponentBase::paint(Graphics& g)
@@ -57,6 +57,6 @@ void OverlayEditorComponentBase::resized()
 
 void OverlayEditorComponentBase::buttonClicked(Button* button)
 {
-    if ((button == m_closeButton.get()) && m_listener)
-        m_listener->toggleEditor();
+    if ((button == m_closeButton.get()) && m_overlayListener)
+        m_overlayListener->toggleEditor();
 }

@@ -22,7 +22,8 @@
     your controls and content.
 */
 class MainPlacrossContentComponent   :  public AudioAppComponent,
-                                        public AudioPlayerComponent::Listener
+                                        public AudioPlayerComponent::Listener,
+                                        public OverlayEditorComponentBase::OverlayParent
 {
 public:
     MainPlacrossContentComponent();
@@ -38,10 +39,15 @@ public:
     void releaseResources() override;
     
     //==========================================================================
+    void paint(Graphics& g) override;
     void resized() override;
 
     //==========================================================================
     void onNewAudiofileLoaded() override;
+
+    //==========================================================================
+    void setOverlayEditor(OverlayEditorComponentBase* editor) override;
+    bool isEditorActive() override;
 
 private:
     //==========================================================================

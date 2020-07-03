@@ -71,6 +71,11 @@
             stripComponentKV.second->audioDeviceStopped();
     }
 
+    void MainPlacrossContentComponent::paint(Graphics& g)
+    {
+        
+    }
+
     void MainPlacrossContentComponent::resized()
     {
         FlexBox fb;
@@ -91,11 +96,37 @@
             FlexItem(nestedFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(5,5,5,5))
             });
         fb.performLayout(getLocalBounds().toFloat());
+
+        if (isEditorActive())
+        {
+            m_overlayEditor->setBounds(getBounds().reduced(10));
+        }
     }
 
     void MainPlacrossContentComponent::onNewAudiofileLoaded()
     {
         setChannelSetup(m_playerComponent->getCurrentChannelCount(), getCurrentDeviceChannelCount().second);
+    }
+
+    void MainPlacrossContentComponent::setOverlayEditor(OverlayEditorComponentBase* editor)
+    {
+        if (isEditorActive() && editor == nullptr)
+        {
+            m_overlayEditor->setVisible(false);
+            removeChildComponent(m_overlayEditor);
+            m_overlayEditor = nullptr;
+        }
+        else if (!isEditorActive() && editor != nullptr)
+        {
+            m_overlayEditor = editor;
+            addAndMakeVisible(m_overlayEditor);
+            resized();
+        }
+    }
+
+    bool MainPlacrossContentComponent::isEditorActive()
+    {
+        return m_overlayEditor != nullptr;
     }
 
     void MainPlacrossContentComponent::setChannelSetup(int numInputChannels, int numOutputChannels, const XmlElement* const storedSettings)

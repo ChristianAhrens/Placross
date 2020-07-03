@@ -62,15 +62,6 @@ void RoutingComponent::resized()
 	fb.justifyContent = FlexBox::JustifyContent::center;
 	fb.items.addArray({ FlexItem(*m_sumButton).withFlex(1) });
 	fb.performLayout(getLocalBounds().toFloat());
-
-    if (m_editor)
-    {
-        auto parent = getParentComponent();
-        if (parent)
-        {
-            m_editor->setBounds(parent->getBounds().reduced(10));
-        }
-    }
 }
 
 void RoutingComponent::buttonClicked(Button* button)
@@ -147,20 +138,21 @@ void RoutingComponent::toggleEditor()
     auto parent = getParentComponent();
     if (parent)
     {
-        if (m_editor)
+        auto op = dynamic_cast<OverlayEditorComponentBase::OverlayParent*>(parent);
+        auto ol = dynamic_cast<OverlayEditorComponentBase::OverlayListener*>(parent);
+        if (op->isEditorActive())
         {
             onRoutingEditingFinished(m_editor->getRouting());
-            m_editor->setVisible(false);
-            parent->removeChildComponent(m_editor.get());
+            op->setOverlayEditor(nullptr);
             m_editor.reset();
         }
         else
         {
             m_editor = std::make_unique<RoutingEditorComponent>(m_inputChannelCount, m_outputChannelCount);
             m_editor->setRouting(m_routingMap);
-            m_editor->addListener(this);
-            parent->addAndMakeVisible(m_editor.get());
-            resized();
+            m_editor->addRoutingListener(this);
+            m_editor->addOverlayListener(this);
+            op->setOverlayEditor(m_editor.get());
         }
     }
 }

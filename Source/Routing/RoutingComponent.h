@@ -18,7 +18,8 @@
 class RoutingComponent  :   public Component,
                             public DrawableButton::Listener,
                             public AudioIODeviceCallback,
-                            public RoutingEditorComponent::Listener
+                            public RoutingEditorComponent::RoutingListener,
+                            public OverlayEditorComponentBase::OverlayListener
 {
 public:
     //==============================================================================

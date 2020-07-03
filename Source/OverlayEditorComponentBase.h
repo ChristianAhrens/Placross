@@ -16,12 +16,23 @@
 class OverlayEditorComponentBase  :   public Component, public DrawableButton::Listener
 {
 public:
-    class Listener
+    class OverlayListener
     {
     public:
-        virtual ~Listener() {};
-        virtual void onRoutingEditingFinished(std::multimap<int, int> const& newRouting) = 0;
+        virtual ~OverlayListener() {};
         virtual void toggleEditor() = 0;
+    };
+
+public:
+    class OverlayParent
+    {
+    public:
+        virtual ~OverlayParent() {};
+        virtual void setOverlayEditor(OverlayEditorComponentBase* editor) = 0;
+        virtual bool isEditorActive() = 0;
+
+    protected:
+        OverlayEditorComponentBase *m_overlayEditor{ nullptr };
     };
 
 public:
@@ -29,7 +40,7 @@ public:
     OverlayEditorComponentBase();
     ~OverlayEditorComponentBase() override;
 
-    void addListener(Listener *l);
+    void addOverlayListener(OverlayListener *l);
 
     //==============================================================================
     void paint (Graphics& g) override;
@@ -40,7 +51,7 @@ public:
 
 private:
     //==============================================================================
-    Listener* m_listener{ nullptr };
+    OverlayListener* m_overlayListener{ nullptr };
 
     //==============================================================================
     std::unique_ptr<DrawableButton> m_closeButton;

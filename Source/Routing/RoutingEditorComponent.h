@@ -18,6 +18,14 @@
 class RoutingEditorComponent  :   public OverlayEditorComponentBase
 {
 public:
+    class RoutingListener
+    {
+    public:
+        virtual ~RoutingListener() {};
+        virtual void onRoutingEditingFinished(std::multimap<int, int> const& newRouting) = 0;
+    };
+
+public:
     //==============================================================================
     RoutingEditorComponent(int RoutingInputChannelCount, int RoutingOutputChannelCount);
 
@@ -28,7 +36,12 @@ public:
     void paint(Graphics& g) override;
     void resized() override;
 
+    void addRoutingListener(RoutingListener* l);
+
 private:
+    //==============================================================================
+    RoutingListener* m_routingListener{ nullptr };
+
     //==============================================================================
     int m_inputChannelCount{ 0 };
     int m_outputChannelCount{ 0 };

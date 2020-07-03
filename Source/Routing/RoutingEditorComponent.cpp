@@ -177,3 +177,8 @@ void RoutingEditorComponent::resized()
 
     grid.performLayout(gridRect);
 }
+
+void RoutingEditorComponent::addRoutingListener(RoutingListener* l)
+{
+    m_routingListener = l;
+}
