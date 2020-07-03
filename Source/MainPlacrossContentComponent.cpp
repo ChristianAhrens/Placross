@@ -71,7 +71,7 @@
             stripComponentKV.second->audioDeviceStopped();
     }
 
-    void MainPlacrossContentComponent::paint(Graphics& g)
+    void MainPlacrossContentComponent::paint(Graphics&)
     {
         
     }

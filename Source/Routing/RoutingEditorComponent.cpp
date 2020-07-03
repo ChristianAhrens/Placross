@@ -146,8 +146,8 @@ void RoutingEditorComponent::resized()
     auto matrixNodeSize = 40;
     auto matrixWidth = (m_inputChannelCount + 1) * matrixNodeSize;
     auto matrixHeight = (m_outputChannelCount + 1) * matrixNodeSize;
-    auto xPos = 0.5f * (getWidth() - matrixWidth) - (0.5f * matrixNodeSize);
-    auto yPos = 0.5f * (getHeight() - matrixHeight) - (0.5f * matrixNodeSize);
+    auto xPos = static_cast<int>(0.5f * (getWidth() - matrixWidth) - (0.5f * matrixNodeSize));
+    auto yPos = static_cast<int>(0.5f * (getHeight() - matrixHeight) - (0.5f * matrixNodeSize));
     Rectangle<int> gridRect(xPos, yPos, matrixWidth, matrixHeight);
 
     Grid grid;
@@ -159,7 +159,9 @@ void RoutingEditorComponent::resized()
     grid.items.add(GridItem());
     for (int i = 0; i < m_inputChannelCount; ++i)
     {
-        m_inputLabels.at(i)->setTransform(AffineTransform::rotation(-MathConstants<float>::halfPi, xPos + matrixNodeSize*(i+1), yPos + matrixNodeSize).translated(matrixNodeSize, 0));
+        auto origX = static_cast<float>(xPos + matrixNodeSize * (i + 1));
+        auto origY = static_cast<float>(yPos + matrixNodeSize);
+        m_inputLabels.at(i)->setTransform(AffineTransform::rotation(-MathConstants<float>::halfPi, origX, origY).translated(static_cast<float>(matrixNodeSize), 0.0f));
 
         grid.templateColumns.add(Grid::TrackInfo(1_fr));
         grid.items.add(GridItem(*m_inputLabels.at(i)));
