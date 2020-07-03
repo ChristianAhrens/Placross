@@ -204,7 +204,7 @@ HPFilterProcessor::HPFilterProcessor()
 
 std::vector<ProcessorBase::ProcessorParam> HPFilterProcessor::getProcessorParams()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"hpff", "HP filter frequency", 20.0f, 20000.0f, 20.0f} };
+	return std::vector<ProcessorBase::ProcessorParam>{ {"hpff", "Highpass freq.", 20.0f, 20000.0f, 20.0f} };
 }
 
 void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -251,7 +251,7 @@ LPFilterProcessor::LPFilterProcessor()
 
 std::vector<ProcessorBase::ProcessorParam> LPFilterProcessor::getProcessorParams()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"lpff", "LP filter frequency", 20.0f, 20000.0f, 20000.0f} };
+	return std::vector<ProcessorBase::ProcessorParam>{ {"lpff", "Lowpass freq.", 20.0f, 20000.0f, 20000.0f} };
 }
 
 void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
