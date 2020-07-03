@@ -85,13 +85,10 @@ void RoutingComponent::audioDeviceIOCallback(const float** inputChannelData,
 	int numOutputChannels,
 	int numSamples)
 {
-    const ScopedLock sl(routingLock);
+    const ScopedLock sl(m_routingLock);
 
-    if (m_routingMap.empty())
-        return;
-
-    AudioBuffer<float> buffer;
-    buffer.setSize(numOutputChannels, numSamples);
+    m_routingOutputBuffer.setSize(numOutputChannels, numSamples, false, true, true);
+    m_routingOutputBuffer.clear();
 
     for (int in = 0; in < numInputChannels; ++in)
     {
@@ -105,17 +102,19 @@ void RoutingComponent::audioDeviceIOCallback(const float** inputChannelData,
             {
                 if (rit->second == out)
                 {
-                    buffer.addFrom(out, 0, inputChannelData[in], numSamples);
+                    m_routingOutputBuffer.addFrom(out, 0, inputChannelData[in], numSamples);
                 }
             }
         }
     }
 
-    //(outputChannelData, buffer.getArrayOfReadPointers(), numOutputChannels * numSamples * sizeof(float));
+    for (int out = 0; out < numOutputChannels; ++out)
+        memcpy(outputChannelData[out], m_routingOutputBuffer.getReadPointer(out), numSamples * sizeof(float));
 }
 
 void RoutingComponent::audioDeviceAboutToStart(AudioIODevice* device)
 {
+    ignoreUnused(device);
 }
 
 void RoutingComponent::audioDeviceStopped()
@@ -124,11 +123,12 @@ void RoutingComponent::audioDeviceStopped()
 
 void RoutingComponent::audioDeviceError(const juce::String &errorMessage)
 {
+    ignoreUnused(errorMessage);
 }
 
 void RoutingComponent::onRoutingEditingFinished(std::multimap<int, int> const& newRouting)
 {
-    const ScopedLock sl(routingLock);
+    const ScopedLock sl(m_routingLock);
 
     m_routingMap = newRouting;
 }
@@ -139,7 +139,6 @@ void RoutingComponent::toggleEditor()
     if (parent)
     {
         auto op = dynamic_cast<OverlayEditorComponentBase::OverlayParent*>(parent);
-        auto ol = dynamic_cast<OverlayEditorComponentBase::OverlayListener*>(parent);
         if (op->isEditorActive())
         {
             onRoutingEditingFinished(m_editor->getRouting());

@@ -63,9 +63,9 @@ private:
     int m_inputChannelCount{ 0 };
     int m_outputChannelCount{ 0 };
 
-    std::multimap<int, int>  m_routingMap{};
-
-    CriticalSection routingLock;
+    std::multimap<int, int> m_routingMap{};
+    CriticalSection         m_routingLock{};
+    AudioSampleBuffer       m_routingOutputBuffer{};
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RoutingComponent)
