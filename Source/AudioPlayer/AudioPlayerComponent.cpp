@@ -195,7 +195,7 @@
     {
         FileChooser chooser ("Select an audio file to play...",
                              {},
-                             "*");
+            formatManager.getWildcardForAllFormats());
 
         if (chooser.browseForFileToOpen())
         {
