@@ -46,6 +46,8 @@ void OverlayEditorComponentBase::addOverlayListener(OverlayListener *l)
 
 void OverlayEditorComponentBase::paint(Graphics& g)
 {
+    g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
+
 	g.setColour(getLookAndFeel().findColour(TextEditor::ColourIds::highlightColourId));
 	g.fillRoundedRectangle(getLocalBounds().toFloat(), 10.0f);
 }
