@@ -85,6 +85,8 @@
         auto safeBounds = getLocalBounds();
         safeBounds.removeFromTop(safety._top);
         safeBounds.removeFromBottom(safety._bottom);
+        safeBounds.removeFromLeft(safety._left);
+        safeBounds.removeFromRight(safety._right);
 
         FlexBox fb;
         fb.flexDirection = FlexBox::Direction::column;
