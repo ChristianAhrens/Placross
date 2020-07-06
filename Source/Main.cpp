@@ -11,6 +11,8 @@
 #include <JuceHeader.h>
 #include "MainPlacrossContentComponent.h"
 
+#include "../submodules/JUCE-AppBasics/Source/CustomLookAndFeel.h"
+
 //==============================================================================
 class PlacrossApplication  : public JUCEApplication
 {
@@ -63,6 +65,9 @@ public:
                                                                           .findColour (ResizableWindow::backgroundColourId),
                                                     DocumentWindow::allButtons)
         {
+            m_customLookAndFeel = std::unique_ptr<LookAndFeel>(new JUCEAppBasics::CustomLookAndFeel);
+            Desktop::getInstance().setDefaultLookAndFeel(m_customLookAndFeel.get());
+
             setUsingNativeTitleBar (true);
             setContentOwned (new MainPlacrossContentComponent(), true);
 
@@ -95,6 +100,8 @@ public:
         */
 
     private:
+        std::unique_ptr<LookAndFeel>	m_customLookAndFeel; // our own look and feel implementation instance
+
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)
     };
 

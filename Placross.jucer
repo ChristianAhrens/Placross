@@ -5,6 +5,33 @@
               bundleIdentifier="com.ChristianAhrens.Placross" version="0.1.1"
               companyName="Christian Ahrens" companyCopyright="2020" companyEmail="christianahrens@me.com">
   <MAINGROUP id="cIkH3v" name="Placross">
+    <GROUP id="{2F00D803-4C7B-B972-8DBF-6BAEC9E73388}" name="submodules">
+      <GROUP id="{3DC4FFDC-5D34-064E-0304-3452EC534EBB}" name="JUCE-AppBasics">
+        <GROUP id="{A32D78D3-4C49-4E09-C022-DECE1E5B3547}" name="Resources">
+          <GROUP id="{4437E7F0-5E5C-6641-89C2-902DA980DE58}" name="Images">
+            <FILE id="naZ4gF" name="close_fullscreen-24px.svg" compile="0" resource="1"
+                  file="submodules/JUCE-AppBasics/Resources/Images/close_fullscreen-24px.svg"/>
+            <FILE id="C69lho" name="mediation-24px.svg" compile="0" resource="1"
+                  file="submodules/JUCE-AppBasics/Resources/Images/mediation-24px.svg"/>
+            <FILE id="Ymp6CW" name="radio_button_checked-24px.svg" compile="0"
+                  resource="1" file="submodules/JUCE-AppBasics/Resources/Images/radio_button_checked-24px.svg"/>
+            <FILE id="xTv2xe" name="radio_button_unchecked-24px.svg" compile="0"
+                  resource="1" file="submodules/JUCE-AppBasics/Resources/Images/radio_button_unchecked-24px.svg"/>
+          </GROUP>
+        </GROUP>
+        <GROUP id="{D61B8334-ED08-4A47-0297-7A7E83EFCF1D}" name="Source">
+          <FILE id="QIRWoR" name="CustomLookAndFeel.cpp" compile="1" resource="0"
+                file="submodules/JUCE-AppBasics/Source/CustomLookAndFeel.cpp"/>
+          <FILE id="C775ER" name="CustomLookAndFeel.h" compile="0" resource="0"
+                file="submodules/JUCE-AppBasics/Source/CustomLookAndFeel.h"/>
+          <FILE id="uuZfSR" name="iOS_utils.hpp" compile="0" resource="0" file="submodules/JUCE-AppBasics/Source/iOS_utils.hpp"/>
+          <FILE id="qvPrBm" name="SplitButtonComponent.cpp" compile="1" resource="0"
+                file="submodules/JUCE-AppBasics/Source/SplitButtonComponent.cpp"/>
+          <FILE id="erMyi3" name="SplitButtonComponent.h" compile="0" resource="0"
+                file="submodules/JUCE-AppBasics/Source/SplitButtonComponent.h"/>
+        </GROUP>
+      </GROUP>
+    </GROUP>
     <GROUP id="{7ECD1AF7-9362-6E0B-D48A-B0CDD0D015F1}" name="Resources">
       <GROUP id="{B3A2414D-7BE5-4334-9D5A-DBFF7E1C6C9D}" name="Testdata">
         <FILE id="Q4T2DP" name="Armand Zildjian Artist In Residence Concert- Nate Smith Solo - 150BPM.m4a"
@@ -12,16 +39,8 @@
         <FILE id="MYv4L2" name="cello.wav" compile="0" resource="1" file="Resources/Testdata/cello.wav"/>
       </GROUP>
       <GROUP id="{144740AA-81D3-FDC9-D0C6-0AFE45ACA594}" name="Images">
-        <FILE id="jR0mkB" name="close_fullscreen-24px.svg" compile="0" resource="1"
-              file="Resources/Images/close_fullscreen-24px.svg"/>
-        <FILE id="d9Drh8" name="mediation-24px.svg" compile="0" resource="1"
-              file="Resources/Images/mediation-24px.svg"/>
         <FILE id="o5e5OQ" name="Placross.png" compile="0" resource="1" file="Resources/Images/Placross.png"/>
         <FILE id="N4Vst6" name="Placross.xcf" compile="0" resource="1" file="Resources/Images/Placross.xcf"/>
-        <FILE id="wo5JtT" name="radio_button_checked-24px.svg" compile="0"
-              resource="1" file="Resources/Images/radio_button_checked-24px.svg"/>
-        <FILE id="Sqkl9k" name="radio_button_unchecked-24px.svg" compile="0"
-              resource="1" file="Resources/Images/radio_button_unchecked-24px.svg"/>
       </GROUP>
     </GROUP>
     <GROUP id="{0480E33C-041F-2346-F9AA-44BBEAD80CFE}" name="Source">

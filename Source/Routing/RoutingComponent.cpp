@@ -51,8 +51,8 @@ void RoutingComponent::setIOCount(int inputChannelCount, int outputChannelCount)
 
 void RoutingComponent::paint(Graphics& g)
 {
-	g.setColour(getLookAndFeel().findColour(TextEditor::ColourIds::highlightColourId));
-	g.fillRoundedRectangle(getLocalBounds().toFloat(), 10.0f);
+	g.setColour(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
+	g.fillRect(getLocalBounds().toFloat());
 }
 
 void RoutingComponent::resized()

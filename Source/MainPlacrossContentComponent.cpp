@@ -10,6 +10,8 @@
 
 #include "MainPlacrossContentComponent.h"
 
+#include "../submodules/JUCE-AppBasics/Source/iOS_utils.hpp"
+
 //==============================================================================
     MainPlacrossContentComponent::MainPlacrossContentComponent()
     {
@@ -71,13 +73,19 @@
             stripComponentKV.second->audioDeviceStopped();
     }
 
-    void MainPlacrossContentComponent::paint(Graphics&)
+    void MainPlacrossContentComponent::paint(Graphics &g)
     {
-        
+        // (Our component is opaque, so we must completely fill the background with a solid colour)
+        g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId).darker());
     }
 
     void MainPlacrossContentComponent::resized()
     {
+        auto safety = JUCEAppBasics::iOS_utils::getDeviceSafetyMargins();
+        auto safeBounds = getLocalBounds();
+        safeBounds.removeFromTop(safety._top);
+        safeBounds.removeFromBottom(safety._bottom);
+
         FlexBox fb;
         fb.flexDirection = FlexBox::Direction::column;
         fb.justifyContent = FlexBox::JustifyContent::center;
@@ -95,11 +103,11 @@
             FlexItem(*m_routingComponent.get()).withMinHeight(30).withMargin(FlexItem::Margin(10,10,0,10)),
             FlexItem(nestedFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(5,5,5,5))
             });
-        fb.performLayout(getLocalBounds().toFloat());
+        fb.performLayout(safeBounds.toFloat());
 
         if (isEditorActive())
         {
-            m_overlayEditor->setBounds(getBounds().reduced(10));
+            m_overlayEditor->setBounds(safeBounds.reduced(10));
         }
     }
 

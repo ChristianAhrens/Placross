@@ -95,6 +95,12 @@
         transportSource.releaseResources();
     }
 
+    void AudioPlayerComponent::paint(Graphics& g)
+    {
+        g.setColour(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
+        g.fillRect(getLocalBounds().toFloat());
+    }
+
     void AudioPlayerComponent::resized()
     {
         FlexBox fb;
@@ -110,10 +116,10 @@
             });
 
         fb.items.addArray({
-            FlexItem(openButton).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0)),
-            FlexItem(playButton).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0)),
-            FlexItem(stopButton).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0)),
-            FlexItem(nestedFb)  .withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0))
+            FlexItem(openButton).withFlex(1).withMargin(FlexItem::Margin(10, 10, 5, 10)),
+            FlexItem(playButton).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)),
+            FlexItem(stopButton).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)),
+            FlexItem(nestedFb)  .withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10))
             });
         
         fb.performLayout(getLocalBounds().toFloat());
