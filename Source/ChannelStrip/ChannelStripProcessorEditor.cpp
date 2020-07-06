@@ -323,18 +323,17 @@ public:
         auto rangeMin = 0.0f;
         auto rangeMax = 1.0f;
         auto defaultVal = 1.0f;
+        auto rangeStep = 1.0f;
         auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter());
         if (fParam)
         {
             rangeMin = fParam->getNormalisableRange().getRange().getStart();
             rangeMax = fParam->getNormalisableRange().getRange().getEnd();
             defaultVal = *fParam;
+            rangeStep = fParam->getNormalisableRange().interval;
         }
 
-        if (getParameter().getNumSteps() != AudioProcessor::getDefaultNumParameterSteps())
-            slider.setRange(rangeMin, rangeMax, rangeMax / (getParameter().getNumSteps() - 1.0));
-        else
-            slider.setRange(rangeMin, rangeMax);
+        slider.setRange(rangeMin, rangeMax, rangeStep);
 
         addAndMakeVisible(slider);
 

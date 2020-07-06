@@ -89,8 +89,7 @@ void ProcessorBase::initParameters()
 		auto newAPF = new AudioParameterFloat(
 			param.id,
 			param.name,
-			param.minV,
-			param.maxV,
+			juce::NormalisableRange<float>(param.minV, param.maxV, param.intervalV, param.skewV),
 			param.defaultV);
 		newAPF->setValueNotifyingHost(getNormalizedValue(newAPF));
 		newAPF->addListener(this);
@@ -157,7 +156,7 @@ GainProcessor::GainProcessor()
 
 std::vector<ProcessorBase::ProcessorParam> GainProcessor::getProcessorParams()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"gain", "Gain", 0.0f, 1.0f, 1.0f} };
+	return std::vector<ProcessorBase::ProcessorParam>{ {"gain", "Gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f} };
 }
 
 void GainProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -204,7 +203,7 @@ HPFilterProcessor::HPFilterProcessor()
 
 std::vector<ProcessorBase::ProcessorParam> HPFilterProcessor::getProcessorParams()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"hpff", "Highpass freq.", 20.0f, 20000.0f, 20.0f} };
+	return std::vector<ProcessorBase::ProcessorParam>{ {"hpff", "Highpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20.0f} };
 }
 
 void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -251,7 +250,7 @@ LPFilterProcessor::LPFilterProcessor()
 
 std::vector<ProcessorBase::ProcessorParam> LPFilterProcessor::getProcessorParams()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"lpff", "Lowpass freq.", 20.0f, 20000.0f, 20000.0f} };
+	return std::vector<ProcessorBase::ProcessorParam>{ {"lpff", "Lowpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20000.0f} };
 }
 
 void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)

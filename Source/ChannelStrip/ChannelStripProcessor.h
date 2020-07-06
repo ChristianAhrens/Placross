@@ -18,12 +18,14 @@ class ProcessorBase  : public AudioProcessor, public AudioProcessorParameter::Li
 public:
     struct ProcessorParam
     {
-        ProcessorParam(String i, String n, float min, float max, float def)
+        ProcessorParam(String i, String n, float min, float max, float interval, float skew, float def)
         {
             id = i;
             name = n;
             minV = min;
             maxV = max;
+            intervalV = interval;
+            skewV = skew;
             defaultV = def;
         }
 
@@ -31,6 +33,8 @@ public:
         String name;    // parameter name
         float minV;     // minimum value
         float maxV;     // maximum value
+        float intervalV;// value interval
+        float skewV;    // value skew
         float defaultV; // default value
     };
     virtual std::vector<ProcessorBase::ProcessorParam> getProcessorParams() = 0;
