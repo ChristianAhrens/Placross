@@ -63,26 +63,33 @@ private:
     };
 
     void changeState (TransportState newState);
+    TransportState currentState();
 
     void openButtonClicked();
     void playButtonClicked();
     void stopButtonClicked();
+    void playPauseButtonClicked();
+    void nextButtonClicked();
+    void prevButtonClicked();
     void loopButtonChanged();
 
     //==========================================================================
     Listener* m_listener{ nullptr };
 
     //==========================================================================
-    TextButton openButton;
-    TextButton playButton;
-    TextButton stopButton;
-    ToggleButton loopingToggle;
-    Label currentPositionLabel;
+    std::unique_ptr<TextButton> m_openButton;
+    //std::unique_ptr<TextButton> m_playButton;
+    //std::unique_ptr<TextButton> m_stopButton;
+    std::unique_ptr<DrawableButton> m_playPauseButton;
+    std::unique_ptr<DrawableButton> m_nextButton;
+    std::unique_ptr<DrawableButton> m_prevButton;
+    std::unique_ptr<ToggleButton> m_loopingToggle;
+    std::unique_ptr<Label> m_currentPositionLabel;
 
-    AudioFormatManager formatManager;
-    std::unique_ptr<AudioFormatReaderSource> readerSource;
-    AudioTransportSource transportSource;
-    TransportState state;
+    AudioFormatManager m_formatManager;
+    std::unique_ptr<AudioFormatReaderSource> m_readerSource;
+    AudioTransportSource m_transportSource;
+    TransportState m_state;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPlayerComponent)
 };

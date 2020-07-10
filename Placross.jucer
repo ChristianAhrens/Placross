@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="InQ33m" name="Placross" projectType="guiapp" jucerVersion="5.4.7"
-              defines="JUCE_USE_LAME_AUDIO_FORMAT=1,&#10;JUCE_USE_MP3AUDIOFORMAT=1,"
+<JUCERPROJECT id="InQ33m" name="Placross" projectType="guiapp" defines="JUCE_USE_LAME_AUDIO_FORMAT=1,&#10;JUCE_USE_MP3AUDIOFORMAT=1,"
               bundleIdentifier="com.ChristianAhrens.Placross" version="0.1.2"
-              companyName="Christian Ahrens" companyCopyright="2020" companyEmail="christianahrens@me.com">
+              companyName="Christian Ahrens" companyCopyright="2020" companyEmail="christianahrens@me.com"
+              jucerFormatVersion="1">
   <MAINGROUP id="cIkH3v" name="Placross">
     <GROUP id="{2F00D803-4C7B-B972-8DBF-6BAEC9E73388}" name="submodules">
       <GROUP id="{3DC4FFDC-5D34-064E-0304-3452EC534EBB}" name="JUCE-AppBasics">
@@ -11,8 +11,15 @@
           <GROUP id="{4437E7F0-5E5C-6641-89C2-902DA980DE58}" name="Images">
             <FILE id="naZ4gF" name="close_fullscreen-24px.svg" compile="0" resource="1"
                   file="submodules/JUCE-AppBasics/Resources/Images/close_fullscreen-24px.svg"/>
+            <FILE id="HnfwYO" name="fast_forward-24px.svg" compile="0" resource="1"
+                  file="submodules/JUCE-AppBasics/Resources/Images/fast_forward-24px.svg"/>
+            <FILE id="TDsWnB" name="fast_rewind-24px.svg" compile="0" resource="1"
+                  file="submodules/JUCE-AppBasics/Resources/Images/fast_rewind-24px.svg"/>
             <FILE id="C69lho" name="mediation-24px.svg" compile="0" resource="1"
                   file="submodules/JUCE-AppBasics/Resources/Images/mediation-24px.svg"/>
+            <FILE id="SGVeCp" name="pause-24px.svg" compile="0" resource="1" file="submodules/JUCE-AppBasics/Resources/Images/pause-24px.svg"/>
+            <FILE id="cmfiUt" name="play_arrow-24px.svg" compile="0" resource="1"
+                  file="submodules/JUCE-AppBasics/Resources/Images/play_arrow-24px.svg"/>
             <FILE id="Ymp6CW" name="radio_button_checked-24px.svg" compile="0"
                   resource="1" file="submodules/JUCE-AppBasics/Resources/Images/radio_button_checked-24px.svg"/>
             <FILE id="xTv2xe" name="radio_button_unchecked-24px.svg" compile="0"

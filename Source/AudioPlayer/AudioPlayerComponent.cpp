@@ -10,37 +10,100 @@
 
 #include "AudioPlayerComponent.h"
 
+static void getDrawableButtonImages(const char* BinaryDataString, 
+    std::unique_ptr<juce::Drawable> &NormalImage, std::unique_ptr<juce::Drawable> &OverImage, std::unique_ptr<juce::Drawable> &DownImage, std::unique_ptr<juce::Drawable>& DisabledImage,
+    std::unique_ptr<juce::Drawable> &NormalOnImage, std::unique_ptr<juce::Drawable> &OverOnImage, std::unique_ptr<juce::Drawable> &DownOnImage, std::unique_ptr<juce::Drawable>& DisabledOnImage)
+{
+    std::unique_ptr<XmlElement> svg_xml = XmlDocument::parse(BinaryDataString);
+
+    // create svg images from resources for regular state
+    NormalImage = Drawable::createFromSVG(*(svg_xml.get()));
+    NormalImage->replaceColour(Colours::black, Colours::white);
+    OverImage = Drawable::createFromSVG(*(svg_xml.get()));
+    OverImage->replaceColour(Colours::black, Colours::lightgrey);
+    DownImage = Drawable::createFromSVG(*(svg_xml.get()));
+    DownImage->replaceColour(Colours::black, Colours::grey);
+    DisabledImage = Drawable::createFromSVG(*(svg_xml.get()));
+    DisabledImage->replaceColour(Colours::black, Colours::grey);
+
+    // create svg images from resources for ON state
+    NormalOnImage = Drawable::createFromSVG(*(svg_xml.get()));
+    NormalOnImage->replaceColour(Colours::black, Colours::white);
+    OverOnImage = Drawable::createFromSVG(*(svg_xml.get()));
+    OverOnImage->replaceColour(Colours::black, Colours::white);
+    DownOnImage = Drawable::createFromSVG(*(svg_xml.get()));
+    DownOnImage->replaceColour(Colours::black, Colours::white);
+    DisabledOnImage = Drawable::createFromSVG(*(svg_xml.get()));
+    DisabledOnImage->replaceColour(Colours::black, Colours::white);
+}
+
 //==============================================================================
     AudioPlayerComponent::AudioPlayerComponent()
-        :   state (Stopped)
+        : m_state (Stopped)
     {
-        addAndMakeVisible (&openButton);
-        openButton.setButtonText ("Open...");
-        openButton.onClick = [this] { openButtonClicked(); };
+        // prepare DrawableButton images
+        std::unique_ptr<juce::Drawable> NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage;
 
-        addAndMakeVisible (&playButton);
-        playButton.setButtonText ("Play");
-        playButton.onClick = [this] { playButtonClicked(); };
-        playButton.setColour (TextButton::buttonColourId, Colours::green);
-        playButton.setEnabled (false);
 
-        addAndMakeVisible (&stopButton);
-        stopButton.setButtonText ("Stop");
-        stopButton.onClick = [this] { stopButtonClicked(); };
-        stopButton.setColour (TextButton::buttonColourId, Colours::red);
-        stopButton.setEnabled (false);
+        m_openButton = std::make_unique<TextButton>();
+        addAndMakeVisible(m_openButton.get());
+        m_openButton->setButtonText ("Open...");
+        m_openButton->onClick = [this] { openButtonClicked(); };
 
-        addAndMakeVisible (&loopingToggle);
-        loopingToggle.setButtonText ("Loop");
-        loopingToggle.onClick = [this] { loopButtonChanged(); };
+        //m_playButton = std::make_unique<TextButton>();
+        //addAndMakeVisible (m_playButton);
+        //m_playButton.setButtonText ("Play");
+        //m_playButton.onClick = [this] { playButtonClicked(); };
+        //m_playButton.setColour (TextButton::buttonColourId, Colours::green);
+        //m_playButton.setEnabled (false);
+        //
+        //m_stopButton = std::make_unique<TextButton>();
+        //addAndMakeVisible (m_stopButton);
+        //m_stopButton.setButtonText ("Stop");
+        //m_stopButton.onClick = [this] { stopButtonClicked(); };
+        //m_stopButton.setColour (TextButton::buttonColourId, Colours::red);
+        //m_stopButton.setEnabled (false);
 
-        addAndMakeVisible (&currentPositionLabel);
-        currentPositionLabel.setText ("Stopped", dontSendNotification);
+        m_playPauseButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
+        addAndMakeVisible(m_playPauseButton.get());
+        m_playPauseButton->onClick = [this] { playPauseButtonClicked(); };
+        m_playPauseButton->setEnabled(false);
+        getDrawableButtonImages(BinaryData::play_arrow24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
+        std::unique_ptr<juce::Drawable> NormalPlayImage(NormalImage.release());
+        std::unique_ptr<juce::Drawable> OverPlayImage(OverImage.release());
+        std::unique_ptr<juce::Drawable> DownPlayImage(DownImage.release());
+        std::unique_ptr<juce::Drawable> DisabledPlayImage(DisabledImage.release());
+        getDrawableButtonImages(BinaryData::pause24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
+        m_playPauseButton->setImages(NormalPlayImage.get(), OverPlayImage.get(), DownPlayImage.get(), DisabledPlayImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
+        m_playPauseButton->setClickingTogglesState(true);
+
+        m_nextButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
+        addAndMakeVisible(m_nextButton.get());
+        m_nextButton->onClick = [this] { nextButtonClicked(); };
+        m_nextButton->setEnabled(false);
+        getDrawableButtonImages(BinaryData::fast_forward24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
+        m_nextButton->setImages(NormalImage.get(), OverImage.get(), DownImage.get(), DisabledImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
+
+        m_prevButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
+        addAndMakeVisible(m_prevButton.get());
+        m_prevButton->onClick = [this] { prevButtonClicked(); };
+        m_prevButton->setEnabled(false);
+        getDrawableButtonImages(BinaryData::fast_rewind24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
+        m_prevButton->setImages(NormalImage.get(), OverImage.get(), DownImage.get(), DisabledImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
+
+        m_loopingToggle = std::make_unique<ToggleButton>();
+        addAndMakeVisible(m_loopingToggle.get());
+        m_loopingToggle->setButtonText ("Loop");
+        m_loopingToggle->onClick = [this] { loopButtonChanged(); };
+
+        m_currentPositionLabel = std::make_unique<Label>();
+        addAndMakeVisible(m_currentPositionLabel.get());
+        m_currentPositionLabel->setText ("Stopped", dontSendNotification);
 
         setSize (300, 300);
 
-        formatManager.registerBasicFormats();
-        transportSource.addChangeListener (this);
+        m_formatManager.registerBasicFormats();
+        m_transportSource.addChangeListener (this);
 
         startTimer (20);
     }
@@ -51,8 +114,8 @@
 
     int AudioPlayerComponent::getCurrentChannelCount()
     {
-        if (readerSource && readerSource->getAudioFormatReader())
-            return readerSource->getAudioFormatReader()->numChannels;
+        if (m_readerSource && m_readerSource->getAudioFormatReader())
+            return m_readerSource->getAudioFormatReader()->numChannels;
         else
             return 2;
     }
@@ -66,7 +129,7 @@
         // but be careful - it will be called on the audio thread, not the GUI thread.
 
         // For more details, see the help for AudioProcessor::prepareToPlay()
-        transportSource.prepareToPlay (samplesPerBlockExpected, sampleRate);
+        m_transportSource.prepareToPlay (samplesPerBlockExpected, sampleRate);
     }
 
     void AudioPlayerComponent::getNextAudioBlock (const AudioSourceChannelInfo& bufferToFill)
@@ -77,13 +140,13 @@
 
         // Right now we are not producing any data, in which case we need to clear the buffer
         // (to prevent the output of random noise)
-        if (readerSource.get() == nullptr)
+        if (m_readerSource.get() == nullptr)
         {
             bufferToFill.clearActiveBufferRegion();
             return;
         }
 
-        transportSource.getNextAudioBlock (bufferToFill);
+        m_transportSource.getNextAudioBlock (bufferToFill);
     }
     
     void AudioPlayerComponent::releaseResources()
@@ -92,7 +155,7 @@
         // restarted due to a setting change.
 
         // For more details, see the help for AudioProcessor::releaseResources()
-        transportSource.releaseResources();
+        m_transportSource.releaseResources();
     }
 
     void AudioPlayerComponent::paint(Graphics& g)
@@ -107,19 +170,29 @@
         fb.flexDirection = FlexBox::Direction::column;
         fb.justifyContent = FlexBox::JustifyContent::center;
 
-        FlexBox nestedFb;
-        nestedFb.flexDirection = FlexBox::Direction::row;
-        nestedFb.justifyContent = FlexBox::JustifyContent::center;
-        nestedFb.items.addArray({
-                FlexItem(loopingToggle).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0)),
-                FlexItem(currentPositionLabel).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0))
+        FlexBox playCtlFb;
+        playCtlFb.flexDirection = FlexBox::Direction::row;
+        playCtlFb.justifyContent = FlexBox::JustifyContent::center;
+        playCtlFb.items.addArray({
+                FlexItem(*m_prevButton).withFlex(1).withMargin(FlexItem::Margin(15, 5, 15, 5)),
+                FlexItem(*m_playPauseButton).withFlex(1).withMargin(FlexItem::Margin(0, 0, 0, 0)),
+                FlexItem(*m_nextButton).withFlex(1).withMargin(FlexItem::Margin(15, 5, 15, 5))
+            });
+
+        FlexBox loopCtlFb;
+        loopCtlFb.flexDirection = FlexBox::Direction::row;
+        loopCtlFb.justifyContent = FlexBox::JustifyContent::center;
+        loopCtlFb.items.addArray({
+                FlexItem(*m_loopingToggle).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0)),
+                FlexItem(*m_currentPositionLabel).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0))
             });
 
         fb.items.addArray({
-            FlexItem(openButton).withFlex(1).withMargin(FlexItem::Margin(10, 10, 5, 10)),
-            FlexItem(playButton).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)),
-            FlexItem(stopButton).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)),
-            FlexItem(nestedFb)  .withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10))
+            FlexItem(*m_openButton).withFlex(1).withMargin(FlexItem::Margin(10, 10, 5, 10)),
+            //FlexItem(m_playButton).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)),
+            //FlexItem(m_stopButton).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)),
+            FlexItem(playCtlFb).withFlex(2).withMargin(FlexItem::Margin(5, 10, 5, 10)),
+            FlexItem(loopCtlFb).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10))
             });
         
         fb.performLayout(getLocalBounds().toFloat());
@@ -127,9 +200,9 @@
 
     void AudioPlayerComponent::changeListenerCallback (ChangeBroadcaster* source)
     {
-        if (source == &transportSource)
+        if (source == &m_transportSource)
         {
-            if (transportSource.isPlaying())
+            if (m_transportSource.isPlaying())
                 changeState (Playing);
             else
                 changeState (Stopped);
@@ -138,9 +211,9 @@
 
     void AudioPlayerComponent::timerCallback()
     {
-        if (transportSource.isPlaying())
+        if (m_transportSource.isPlaying())
         {
-            RelativeTime position (transportSource.getCurrentPosition());
+            RelativeTime position (m_transportSource.getCurrentPosition());
 
             auto minutes = ((int) position.inMinutes()) % 60;
             auto seconds = ((int) position.inSeconds()) % 60;
@@ -148,11 +221,12 @@
 
             auto positionString = String::formatted ("%02d:%02d:%03d", minutes, seconds, millis);
 
-            currentPositionLabel.setText (positionString, dontSendNotification);
+            m_currentPositionLabel->setText (positionString, dontSendNotification);
         }
         else
         {
-            currentPositionLabel.setText ("Stopped", dontSendNotification);
+            m_currentPositionLabel->setText ("Stopped", dontSendNotification);
+            m_playPauseButton->setToggleState(false, dontSendNotification);
         }
     }
 
@@ -163,57 +237,71 @@
 
     void AudioPlayerComponent::updateLoopState (bool shouldLoop)
     {
-        if (readerSource.get() != nullptr)
-            readerSource->setLooping (shouldLoop);
+        if (m_readerSource.get() != nullptr)
+            m_readerSource->setLooping (shouldLoop);
     }
 
     void AudioPlayerComponent::changeState (TransportState newState)
     {
-        if (state != newState)
+        if (m_state != newState)
         {
-            state = newState;
+            m_state = newState;
 
-            switch (state)
+            switch (m_state)
             {
                 case Stopped:
-                    stopButton.setEnabled (false);
-                    playButton.setEnabled (true);
-                    transportSource.setPosition (0.0);
+                    //m_stopButton->setEnabled (false);
+                    //m_playButton->setEnabled (true);
+                    m_transportSource.setPosition (0.0);
                     break;
 
                 case Starting:
-                    playButton.setEnabled (false);
-                    transportSource.start();
+                    //m_playButton->setEnabled (false);
+                    m_playPauseButton->setEnabled(false);
+                    m_prevButton->setEnabled(false);
+                    m_nextButton->setEnabled(false);
+                    m_transportSource.start();
                     break;
 
                 case Playing:
-                    stopButton.setEnabled (true);
+                    //m_stopButton->setEnabled (true);
+                    m_playPauseButton->setEnabled(true);
+                    m_prevButton->setEnabled(true);
+                    m_nextButton->setEnabled(true);
                     break;
 
                 case Stopping:
-                    transportSource.stop();
+                    m_transportSource.stop();
                     break;
             }
         }
+    }
+
+    AudioPlayerComponent::TransportState AudioPlayerComponent::currentState()
+    {
+        return m_state;
     }
 
     void AudioPlayerComponent::openButtonClicked()
     {
         FileChooser chooser ("Select an audio file to play...",
                              {},
-            formatManager.getWildcardForAllFormats());
+            m_formatManager.getWildcardForAllFormats());
 
         if (chooser.browseForFileToOpen())
         {
             auto file = chooser.getResult();
-            auto* reader = formatManager.createReaderFor (file);
+            auto* reader = m_formatManager.createReaderFor (file);
 
             if (reader != nullptr)
             {
                 std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (reader, true));                
-                transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate, reader->numChannels);
-                playButton.setEnabled (true);
-                readerSource.reset (newSource.release());
+                m_transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate, reader->numChannels);
+                //playButton->setEnabled (true);
+                m_playPauseButton->setEnabled(true);
+                m_prevButton->setEnabled(true);
+                m_nextButton->setEnabled(true);
+                m_readerSource.reset (newSource.release());
 
                 if (m_listener)
                     m_listener->onNewAudiofileLoaded();
@@ -223,7 +311,7 @@
 
     void AudioPlayerComponent::playButtonClicked()
     {
-        updateLoopState (loopingToggle.getToggleState());
+        updateLoopState (m_loopingToggle->getToggleState());
         changeState (Starting);
     }
 
@@ -232,8 +320,31 @@
         changeState (Stopping);
     }
 
+    void AudioPlayerComponent::playPauseButtonClicked()
+    {
+        if (currentState() == Playing)
+        {
+            changeState(Stopping);
+        }
+        else
+        {
+            updateLoopState(m_loopingToggle->getToggleState());
+            changeState(Starting);
+        }
+    }
+
+    void AudioPlayerComponent::nextButtonClicked()
+    {
+
+    }
+
+    void AudioPlayerComponent::prevButtonClicked()
+    {
+
+    }
+
     void AudioPlayerComponent::loopButtonChanged()
     {
-        updateLoopState (loopingToggle.getToggleState());
+        updateLoopState (m_loopingToggle->getToggleState());
     }
 
