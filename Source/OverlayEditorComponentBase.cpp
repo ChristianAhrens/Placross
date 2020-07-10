@@ -10,26 +10,16 @@
 
 #include "OverlayEditorComponentBase.h"
 
+#include "../submodules/JUCE-AppBasics/Source/Image_utils.hpp"
+
 OverlayEditorComponentBase::OverlayEditorComponentBase()
 {
     m_closeButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
-    std::unique_ptr<XmlElement> Close_svg_xml = XmlDocument::parse(BinaryData::close_fullscreen24px_svg);
-    // create svg images from resources for regular state
-    std::unique_ptr<juce::Drawable> drawableCloseNormalImage = Drawable::createFromSVG(*(Close_svg_xml.get()));
-    drawableCloseNormalImage->replaceColour(Colours::black, Colours::white);
-    std::unique_ptr<juce::Drawable> drawableCloseOverImage = Drawable::createFromSVG(*(Close_svg_xml.get()));
-    drawableCloseOverImage->replaceColour(Colours::black, Colours::lightgrey);
-    std::unique_ptr<juce::Drawable> drawableCloseDownImage = Drawable::createFromSVG(*(Close_svg_xml.get()));
-    drawableCloseDownImage->replaceColour(Colours::black, Colours::grey);
-    // create svg images from resources for ON state
-    std::unique_ptr<juce::Drawable> drawableCloseNormalOnImage = Drawable::createFromSVG(*(Close_svg_xml.get()));
-    drawableCloseNormalOnImage->replaceColour(Colours::black, Colours::white);
-    std::unique_ptr<juce::Drawable> drawableCloseOverOnImage = Drawable::createFromSVG(*(Close_svg_xml.get()));
-    drawableCloseOverOnImage->replaceColour(Colours::black, Colours::white);
-    std::unique_ptr<juce::Drawable> drawableCloseDownOnImage = Drawable::createFromSVG(*(Close_svg_xml.get()));
-    drawableCloseDownOnImage->replaceColour(Colours::black, Colours::white);
+
+    std::unique_ptr<juce::Drawable> NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage;
+    JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::close_fullscreen24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
     // set the images to button
-    m_closeButton->setImages(drawableCloseNormalImage.get(), drawableCloseOverImage.get(), drawableCloseDownImage.get(), nullptr, drawableCloseNormalOnImage.get(), drawableCloseOverOnImage.get(), drawableCloseDownOnImage.get(), nullptr);
+    m_closeButton->setImages(NormalImage.get(), OverImage.get(), DownImage.get(), DisabledImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
     addAndMakeVisible(m_closeButton.get());
     m_closeButton->addListener(this);
 }

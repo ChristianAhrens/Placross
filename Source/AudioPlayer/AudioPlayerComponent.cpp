@@ -10,70 +10,29 @@
 
 #include "AudioPlayerComponent.h"
 
-static void getDrawableButtonImages(const char* BinaryDataString, 
-    std::unique_ptr<juce::Drawable> &NormalImage, std::unique_ptr<juce::Drawable> &OverImage, std::unique_ptr<juce::Drawable> &DownImage, std::unique_ptr<juce::Drawable>& DisabledImage,
-    std::unique_ptr<juce::Drawable> &NormalOnImage, std::unique_ptr<juce::Drawable> &OverOnImage, std::unique_ptr<juce::Drawable> &DownOnImage, std::unique_ptr<juce::Drawable>& DisabledOnImage)
-{
-    std::unique_ptr<XmlElement> svg_xml = XmlDocument::parse(BinaryDataString);
-
-    // create svg images from resources for regular state
-    NormalImage = Drawable::createFromSVG(*(svg_xml.get()));
-    NormalImage->replaceColour(Colours::black, Colours::white);
-    OverImage = Drawable::createFromSVG(*(svg_xml.get()));
-    OverImage->replaceColour(Colours::black, Colours::lightgrey);
-    DownImage = Drawable::createFromSVG(*(svg_xml.get()));
-    DownImage->replaceColour(Colours::black, Colours::grey);
-    DisabledImage = Drawable::createFromSVG(*(svg_xml.get()));
-    DisabledImage->replaceColour(Colours::black, Colours::grey);
-
-    // create svg images from resources for ON state
-    NormalOnImage = Drawable::createFromSVG(*(svg_xml.get()));
-    NormalOnImage->replaceColour(Colours::black, Colours::white);
-    OverOnImage = Drawable::createFromSVG(*(svg_xml.get()));
-    OverOnImage->replaceColour(Colours::black, Colours::white);
-    DownOnImage = Drawable::createFromSVG(*(svg_xml.get()));
-    DownOnImage->replaceColour(Colours::black, Colours::white);
-    DisabledOnImage = Drawable::createFromSVG(*(svg_xml.get()));
-    DisabledOnImage->replaceColour(Colours::black, Colours::white);
-}
+#include "../submodules/JUCE-AppBasics/Source/Image_utils.hpp"
 
 //==============================================================================
     AudioPlayerComponent::AudioPlayerComponent()
         : m_state (Stopped)
     {
-        // prepare DrawableButton images
         std::unique_ptr<juce::Drawable> NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage;
-
 
         m_openButton = std::make_unique<TextButton>();
         addAndMakeVisible(m_openButton.get());
         m_openButton->setButtonText ("Open...");
         m_openButton->onClick = [this] { openButtonClicked(); };
 
-        //m_playButton = std::make_unique<TextButton>();
-        //addAndMakeVisible (m_playButton);
-        //m_playButton.setButtonText ("Play");
-        //m_playButton.onClick = [this] { playButtonClicked(); };
-        //m_playButton.setColour (TextButton::buttonColourId, Colours::green);
-        //m_playButton.setEnabled (false);
-        //
-        //m_stopButton = std::make_unique<TextButton>();
-        //addAndMakeVisible (m_stopButton);
-        //m_stopButton.setButtonText ("Stop");
-        //m_stopButton.onClick = [this] { stopButtonClicked(); };
-        //m_stopButton.setColour (TextButton::buttonColourId, Colours::red);
-        //m_stopButton.setEnabled (false);
-
         m_playPauseButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
         addAndMakeVisible(m_playPauseButton.get());
         m_playPauseButton->onClick = [this] { playPauseButtonClicked(); };
         m_playPauseButton->setEnabled(false);
-        getDrawableButtonImages(BinaryData::play_arrow24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
+        JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::play_arrow24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
         std::unique_ptr<juce::Drawable> NormalPlayImage(NormalImage.release());
         std::unique_ptr<juce::Drawable> OverPlayImage(OverImage.release());
         std::unique_ptr<juce::Drawable> DownPlayImage(DownImage.release());
         std::unique_ptr<juce::Drawable> DisabledPlayImage(DisabledImage.release());
-        getDrawableButtonImages(BinaryData::pause24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
+        JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::pause24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
         m_playPauseButton->setImages(NormalPlayImage.get(), OverPlayImage.get(), DownPlayImage.get(), DisabledPlayImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
         m_playPauseButton->setClickingTogglesState(true);
 
@@ -81,14 +40,14 @@ static void getDrawableButtonImages(const char* BinaryDataString,
         addAndMakeVisible(m_nextButton.get());
         m_nextButton->onClick = [this] { nextButtonClicked(); };
         m_nextButton->setEnabled(false);
-        getDrawableButtonImages(BinaryData::fast_forward24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
+        JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::fast_forward24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
         m_nextButton->setImages(NormalImage.get(), OverImage.get(), DownImage.get(), DisabledImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
 
         m_prevButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
         addAndMakeVisible(m_prevButton.get());
         m_prevButton->onClick = [this] { prevButtonClicked(); };
         m_prevButton->setEnabled(false);
-        getDrawableButtonImages(BinaryData::fast_rewind24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
+        JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::fast_rewind24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
         m_prevButton->setImages(NormalImage.get(), OverImage.get(), DownImage.get(), DisabledImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
 
         m_loopingToggle = std::make_unique<ToggleButton>();
@@ -189,8 +148,6 @@ static void getDrawableButtonImages(const char* BinaryDataString,
 
         fb.items.addArray({
             FlexItem(*m_openButton).withFlex(1).withMargin(FlexItem::Margin(10, 10, 5, 10)),
-            //FlexItem(m_playButton).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)),
-            //FlexItem(m_stopButton).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)),
             FlexItem(playCtlFb).withFlex(2).withMargin(FlexItem::Margin(5, 10, 5, 10)),
             FlexItem(loopCtlFb).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10))
             });
@@ -250,13 +207,10 @@ static void getDrawableButtonImages(const char* BinaryDataString,
             switch (m_state)
             {
                 case Stopped:
-                    //m_stopButton->setEnabled (false);
-                    //m_playButton->setEnabled (true);
                     m_transportSource.setPosition (0.0);
                     break;
 
                 case Starting:
-                    //m_playButton->setEnabled (false);
                     m_playPauseButton->setEnabled(false);
                     m_prevButton->setEnabled(false);
                     m_nextButton->setEnabled(false);
@@ -264,7 +218,6 @@ static void getDrawableButtonImages(const char* BinaryDataString,
                     break;
 
                 case Playing:
-                    //m_stopButton->setEnabled (true);
                     m_playPauseButton->setEnabled(true);
                     m_prevButton->setEnabled(true);
                     m_nextButton->setEnabled(true);
@@ -297,7 +250,6 @@ static void getDrawableButtonImages(const char* BinaryDataString,
             {
                 std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (reader, true));                
                 m_transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate, reader->numChannels);
-                //playButton->setEnabled (true);
                 m_playPauseButton->setEnabled(true);
                 m_prevButton->setEnabled(true);
                 m_nextButton->setEnabled(true);

@@ -15,8 +15,12 @@
                   file="submodules/JUCE-AppBasics/Resources/Images/fast_forward-24px.svg"/>
             <FILE id="TDsWnB" name="fast_rewind-24px.svg" compile="0" resource="1"
                   file="submodules/JUCE-AppBasics/Resources/Images/fast_rewind-24px.svg"/>
+            <FILE id="vyj5qs" name="folder_open-24px.svg" compile="0" resource="1"
+                  file="submodules/JUCE-AppBasics/Resources/Images/folder_open-24px.svg"/>
             <FILE id="C69lho" name="mediation-24px.svg" compile="0" resource="1"
                   file="submodules/JUCE-AppBasics/Resources/Images/mediation-24px.svg"/>
+            <FILE id="pv2sCZ" name="open_in_full-24px.svg" compile="0" resource="1"
+                  file="submodules/JUCE-AppBasics/Resources/Images/open_in_full-24px.svg"/>
             <FILE id="SGVeCp" name="pause-24px.svg" compile="0" resource="1" file="submodules/JUCE-AppBasics/Resources/Images/pause-24px.svg"/>
             <FILE id="cmfiUt" name="play_arrow-24px.svg" compile="0" resource="1"
                   file="submodules/JUCE-AppBasics/Resources/Images/play_arrow-24px.svg"/>
@@ -31,6 +35,7 @@
                 file="submodules/JUCE-AppBasics/Source/CustomLookAndFeel.cpp"/>
           <FILE id="C775ER" name="CustomLookAndFeel.h" compile="0" resource="0"
                 file="submodules/JUCE-AppBasics/Source/CustomLookAndFeel.h"/>
+          <FILE id="RTxQ5r" name="Image_utils.hpp" compile="0" resource="0" file="submodules/JUCE-AppBasics/Source/Image_utils.hpp"/>
           <FILE id="uuZfSR" name="iOS_utils.hpp" compile="0" resource="0" file="submodules/JUCE-AppBasics/Source/iOS_utils.hpp"/>
           <FILE id="qvPrBm" name="SplitButtonComponent.cpp" compile="1" resource="0"
                 file="submodules/JUCE-AppBasics/Source/SplitButtonComponent.cpp"/>

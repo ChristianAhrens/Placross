@@ -10,26 +10,15 @@
 
 #include "RoutingComponent.h"
 
+#include "../submodules/JUCE-AppBasics/Source/Image_utils.hpp"
+
 RoutingComponent::RoutingComponent()
 {
 	m_sumButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
-    std::unique_ptr<XmlElement> Routing_svg_xml = XmlDocument::parse(BinaryData::mediation24px_svg);
-    // create svg images from resources for regular state
-    std::unique_ptr<juce::Drawable> drawableRoutingNormalImage = Drawable::createFromSVG(*(Routing_svg_xml.get()));
-    drawableRoutingNormalImage->replaceColour(Colours::black, Colours::white);
-    std::unique_ptr<juce::Drawable> drawableRoutingOverImage = Drawable::createFromSVG(*(Routing_svg_xml.get()));
-    drawableRoutingOverImage->replaceColour(Colours::black, Colours::lightgrey);
-    std::unique_ptr<juce::Drawable> drawableRoutingDownImage = Drawable::createFromSVG(*(Routing_svg_xml.get()));
-    drawableRoutingDownImage->replaceColour(Colours::black, Colours::grey);
-    // create svg images from resources for ON state
-    std::unique_ptr<juce::Drawable> drawableRoutingNormalOnImage = Drawable::createFromSVG(*(Routing_svg_xml.get()));
-    drawableRoutingNormalOnImage->replaceColour(Colours::black, Colours::white);
-    std::unique_ptr<juce::Drawable> drawableRoutingOverOnImage = Drawable::createFromSVG(*(Routing_svg_xml.get()));
-    drawableRoutingOverOnImage->replaceColour(Colours::black, Colours::white);
-    std::unique_ptr<juce::Drawable> drawableRoutingDownOnImage = Drawable::createFromSVG(*(Routing_svg_xml.get()));
-    drawableRoutingDownOnImage->replaceColour(Colours::black, Colours::white);
+    std::unique_ptr<juce::Drawable> NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage;
+    JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::mediation24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
     // set the images to button
-    m_sumButton->setImages(drawableRoutingNormalImage.get(), drawableRoutingOverImage.get(), drawableRoutingDownImage.get(), nullptr, drawableRoutingNormalOnImage.get(), drawableRoutingOverOnImage.get(), drawableRoutingDownOnImage.get(), nullptr);
+    m_sumButton->setImages(NormalImage.get(), OverImage.get(), DownImage.get(), DisabledImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
     addAndMakeVisible(m_sumButton.get());
     m_sumButton->addListener(this);
 
