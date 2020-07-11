@@ -27,13 +27,9 @@
         addAndMakeVisible(m_playPauseButton.get());
         m_playPauseButton->onClick = [this] { playPauseButtonClicked(); };
         m_playPauseButton->setEnabled(false);
-        JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::play_arrow24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
-        std::unique_ptr<juce::Drawable> NormalPlayImage(NormalImage.release());
-        std::unique_ptr<juce::Drawable> OverPlayImage(OverImage.release());
-        std::unique_ptr<juce::Drawable> DownPlayImage(DownImage.release());
-        std::unique_ptr<juce::Drawable> DisabledPlayImage(DisabledImage.release());
         JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::pause24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
-        m_playPauseButton->setImages(NormalPlayImage.get(), OverPlayImage.get(), DownPlayImage.get(), DisabledPlayImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
+        JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::play_arrow24px_svg, NormalImage, OverImage, DownImage, DisabledImage);
+        m_playPauseButton->setImages(NormalImage.get(), OverImage.get(), DownImage.get(), DisabledImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
         m_playPauseButton->setClickingTogglesState(true);
 
         m_nextButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
