@@ -37,6 +37,10 @@
                 file="submodules/JUCE-AppBasics/Source/CustomLookAndFeel.h"/>
           <FILE id="RTxQ5r" name="Image_utils.hpp" compile="0" resource="0" file="submodules/JUCE-AppBasics/Source/Image_utils.hpp"/>
           <FILE id="uuZfSR" name="iOS_utils.hpp" compile="0" resource="0" file="submodules/JUCE-AppBasics/Source/iOS_utils.hpp"/>
+          <FILE id="Ifqqws" name="OverlayToggleComponentBase.cpp" compile="1"
+                resource="0" file="submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.cpp"/>
+          <FILE id="hkDVFK" name="OverlayToggleComponentBase.h" compile="0" resource="0"
+                file="submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.h"/>
           <FILE id="qvPrBm" name="SplitButtonComponent.cpp" compile="1" resource="0"
                 file="submodules/JUCE-AppBasics/Source/SplitButtonComponent.cpp"/>
           <FILE id="erMyi3" name="SplitButtonComponent.h" compile="0" resource="0"

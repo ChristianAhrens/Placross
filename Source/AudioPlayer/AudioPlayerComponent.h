@@ -12,11 +12,13 @@
 
 #include <JuceHeader.h>
 
+#include "../submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.h"
+
 //==============================================================================
 /*
 *
 */
-class AudioPlayerComponent   :  public Component,
+class AudioPlayerComponent   :  public JUCEAppBasics::OverlayToggleComponentBase,
                                 public AudioSource,
                                 public ChangeListener,
                                 public Timer
@@ -30,7 +32,7 @@ public:
 
 public:
     AudioPlayerComponent();
-    ~AudioPlayerComponent() override;
+    virtual ~AudioPlayerComponent();
 
     int getCurrentChannelCount();
 
@@ -40,7 +42,6 @@ public:
     void releaseResources() override;
     
     //==========================================================================
-    void paint(Graphics& g) override;
     void resized() override;
     
     //==========================================================================
@@ -53,6 +54,9 @@ public:
     void addListener(Listener* l);
     void updateLoopState (bool shouldLoop);
 
+protected:
+    void changeOverlayState() override;
+
 private:
     enum TransportState
     {
@@ -62,8 +66,8 @@ private:
         Stopping
     };
 
-    void changeState (TransportState newState);
-    TransportState currentState();
+    void changeTransportState (TransportState newState);
+    TransportState getCurrentTransportState();
 
     void openButtonClicked();
     void playButtonClicked();
@@ -87,7 +91,7 @@ private:
     AudioFormatManager m_formatManager;
     std::unique_ptr<AudioFormatReaderSource> m_readerSource;
     AudioTransportSource m_transportSource;
-    TransportState m_state;
+    TransportState m_transportState;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPlayerComponent)
 };

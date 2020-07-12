@@ -17,6 +17,8 @@
     {
         m_playerComponent = std::make_unique<AudioPlayerComponent>();
         m_playerComponent->addListener(this);
+        m_playerComponent->addOverlayParent(this);
+        m_playerComponent->parentResize = [this] { resized(); };
         addAndMakeVisible(m_playerComponent.get());
 
         m_routingComponent = std::make_unique<RoutingComponent>();
@@ -82,34 +84,47 @@
     void MainPlacrossContentComponent::resized()
     {
         auto safety = JUCEAppBasics::iOS_utils::getDeviceSafetyMargins();
-        auto safeBounds = getLocalBounds();
-        safeBounds.removeFromTop(safety._top);
-        safeBounds.removeFromBottom(safety._bottom);
-        safeBounds.removeFromLeft(safety._left);
-        safeBounds.removeFromRight(safety._right);
 
-        FlexBox fb;
-        fb.flexDirection = FlexBox::Direction::column;
-        fb.justifyContent = FlexBox::JustifyContent::center;
-
-        FlexBox nestedFb;
-        nestedFb.flexDirection = FlexBox::Direction::row;
-        nestedFb.justifyContent = FlexBox::JustifyContent::center;
-        for (auto& stripComponentKV : m_stripComponents)
+        if (isOverlayActive())
         {
-            nestedFb.items.add(FlexItem(*stripComponentKV.second.get()).withFlex(1).withMargin(FlexItem::Margin(5, 5, 5, 5)));
+            auto safeBounds = getLocalBounds();
+            safeBounds.removeFromTop(safety._top);
+            safeBounds.removeFromBottom(safety._bottom);
+            safeBounds.removeFromLeft(safety._left);
+            safeBounds.removeFromRight(safety._right);
+            m_activeOverlay->setBounds(safeBounds);
         }
-
-        fb.items.addArray({
-            FlexItem(*m_playerComponent.get()).withMinHeight(160).withMargin(FlexItem::Margin(10,10,0,10)),
-            FlexItem(*m_routingComponent.get()).withMinHeight(30).withMargin(FlexItem::Margin(10,10,0,10)),
-            FlexItem(nestedFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(5,5,5,5))
-            });
-        fb.performLayout(safeBounds.toFloat());
-
-        if (isEditorActive())
+        else
         {
-            m_overlayEditor->setBounds(safeBounds.reduced(10));
+            auto safeBounds = getLocalBounds();
+            safeBounds.removeFromTop(safety._top);
+            safeBounds.removeFromBottom(safety._bottom);
+            safeBounds.removeFromLeft(safety._left);
+            safeBounds.removeFromRight(safety._right);
+
+            FlexBox fb;
+            fb.flexDirection = FlexBox::Direction::column;
+            fb.justifyContent = FlexBox::JustifyContent::center;
+
+            FlexBox nestedFb;
+            nestedFb.flexDirection = FlexBox::Direction::row;
+            nestedFb.justifyContent = FlexBox::JustifyContent::center;
+            for (auto& stripComponentKV : m_stripComponents)
+            {
+                nestedFb.items.add(FlexItem(*stripComponentKV.second.get()).withFlex(1).withMargin(FlexItem::Margin(5, 5, 5, 5)));
+            }
+
+            fb.items.addArray({
+                FlexItem(*m_playerComponent.get()).withMinHeight(100).withMargin(FlexItem::Margin(10,10,0,10)),
+                FlexItem(*m_routingComponent.get()).withMinHeight(45).withMargin(FlexItem::Margin(10,10,0,10)),
+                FlexItem(nestedFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(5,5,5,5))
+                });
+            fb.performLayout(safeBounds.toFloat());
+
+            if (isEditorActive())
+            {
+                m_overlayEditor->setBounds(safeBounds.reduced(10));
+            }
         }
     }
 

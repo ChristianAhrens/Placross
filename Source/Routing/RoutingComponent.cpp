@@ -49,7 +49,7 @@ void RoutingComponent::resized()
 	FlexBox fb;
 	fb.flexDirection = FlexBox::Direction::column;
 	fb.justifyContent = FlexBox::JustifyContent::center;
-	fb.items.addArray({ FlexItem(*m_sumButton).withFlex(1) });
+	fb.items.addArray({ FlexItem(*m_sumButton).withFlex(1).withMaxHeight(30) });
 	fb.performLayout(getLocalBounds().toFloat());
 }
 

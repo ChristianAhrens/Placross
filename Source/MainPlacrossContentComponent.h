@@ -16,6 +16,8 @@
 #include "Routing/RoutingComponent.h"
 #include "ChannelStrip/ChannelStripComponent.h"
 
+#include "../submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.h"
+
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
@@ -23,7 +25,8 @@
 */
 class MainPlacrossContentComponent   :  public AudioAppComponent,
                                         public AudioPlayerComponent::Listener,
-                                        public OverlayEditorComponentBase::OverlayParent
+                                        public OverlayEditorComponentBase::OverlayParent,
+                                        public JUCEAppBasics::OverlayToggleComponentBase::OverlayParent
 {
 public:
     MainPlacrossContentComponent();
