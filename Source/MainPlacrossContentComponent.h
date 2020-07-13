@@ -25,7 +25,6 @@
 */
 class MainPlacrossContentComponent   :  public AudioAppComponent,
                                         public AudioPlayerComponent::Listener,
-                                        public OverlayEditorComponentBase::OverlayParent,
                                         public JUCEAppBasics::OverlayToggleComponentBase::OverlayParent
 {
 public:
@@ -47,10 +46,6 @@ public:
 
     //==========================================================================
     void onNewAudiofileLoaded() override;
-
-    //==========================================================================
-    void setOverlayEditor(OverlayEditorComponentBase* editor) override;
-    bool isEditorActive() override;
 
 private:
     //==========================================================================

@@ -22,6 +22,8 @@
         addAndMakeVisible(m_playerComponent.get());
 
         m_routingComponent = std::make_unique<RoutingComponent>();
+        m_routingComponent->addOverlayParent(this);
+        m_routingComponent->parentResize = [this] { resized(); };
         addAndMakeVisible(m_routingComponent.get());
 
         // Specify the number of output channels that we want to open
@@ -120,38 +122,12 @@
                 FlexItem(nestedFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(5,5,5,5))
                 });
             fb.performLayout(safeBounds.toFloat());
-
-            if (isEditorActive())
-            {
-                m_overlayEditor->setBounds(safeBounds.reduced(10));
-            }
         }
     }
 
     void MainPlacrossContentComponent::onNewAudiofileLoaded()
     {
         setChannelSetup(m_playerComponent->getCurrentChannelCount(), getCurrentDeviceChannelCount().second);
-    }
-
-    void MainPlacrossContentComponent::setOverlayEditor(OverlayEditorComponentBase* editor)
-    {
-        if (isEditorActive() && editor == nullptr)
-        {
-            m_overlayEditor->setVisible(false);
-            removeChildComponent(m_overlayEditor);
-            m_overlayEditor = nullptr;
-        }
-        else if (!isEditorActive() && editor != nullptr)
-        {
-            m_overlayEditor = editor;
-            addAndMakeVisible(m_overlayEditor);
-            resized();
-        }
-    }
-
-    bool MainPlacrossContentComponent::isEditorActive()
-    {
-        return m_overlayEditor != nullptr;
     }
 
     void MainPlacrossContentComponent::setChannelSetup(int numInputChannels, int numOutputChannels, const XmlElement* const storedSettings)

@@ -12,14 +12,12 @@
 
 #include <JuceHeader.h>
 
-#include "RoutingEditorComponent.h"
+#include "../submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.h"
 
 //==============================================================================
-class RoutingComponent  :   public Component,
-                            public DrawableButton::Listener,
+class RoutingComponent  :   public JUCEAppBasics::OverlayToggleComponentBase,
                             public AudioIODeviceCallback,
-                            public RoutingEditorComponent::RoutingListener,
-                            public OverlayEditorComponentBase::OverlayListener
+                            public DrawableButton::Listener
 {
 public:
     //==============================================================================
@@ -29,7 +27,6 @@ public:
     void setIOCount(int inputChannelCount, int outputChannelCount);
 
     //==============================================================================
-    void paint (Graphics& g) override;
     void resized() override;
 
     //==============================================================================
@@ -45,24 +42,32 @@ public:
     void audioDeviceStopped() override;
     void audioDeviceError(const juce::String &errorMessage) override;
 
-    //==============================================================================
-    void onRoutingEditingFinished(std::multimap<int, int> const& newRouting) override;
-    void toggleEditor() override;
+
+protected:
+    void changeOverlayState() override;
 
 private:
     //==============================================================================
     void initialiseRouting();
+    void clearRouting();
+    void setRouting(std::multimap<int, int> const& routingMap);
+
+    //==============================================================================
+    void onRoutingEditingFinished(std::multimap<int, int> const& newRouting);
+
+    void toggleMinimizedMaximizedElementVisibility(bool maximized);
 
     //==============================================================================
     std::unique_ptr<DrawableButton> m_sumButton;
 
     //==============================================================================
-    std::unique_ptr<RoutingEditorComponent> m_editor;
+    std::vector<std::unique_ptr<Label>>                          m_inputLabels;
+    std::vector<std::unique_ptr<Label>>                          m_outputLabels;
+    std::vector<std::vector<std::unique_ptr<DrawableButton>>>    m_nodeButtons;
 
     //==============================================================================
-    int m_inputChannelCount{ 0 };
-    int m_outputChannelCount{ 0 };
-
+    int                     m_inputChannelCount{ 0 };
+    int                     m_outputChannelCount{ 0 };
     std::multimap<int, int> m_routingMap{};
     CriticalSection         m_routingLock{};
     AudioSampleBuffer       m_routingOutputBuffer{};
