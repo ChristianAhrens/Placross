@@ -131,16 +131,18 @@ void AudioPlayerComponent::resized()
             FlexItem(*m_nextButton).withFlex(1).withMargin(FlexItem::Margin(15, 5, 15, 5))
         });
 
+    // The loop control row is oonly used in maximized mode but we still need to create it in the methods general scope
+    FlexBox loopCtlFb;
+    loopCtlFb.flexDirection = FlexBox::Direction::row;
+    loopCtlFb.justifyContent = FlexBox::JustifyContent::center;
+    loopCtlFb.items.addArray({
+            FlexItem(*m_loopingToggle).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0)),
+            FlexItem(*m_currentPositionLabel).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0))
+        });
+
     // layout all elements for maximized mode
     if(getCurrentOverlayState() == maximized)
     {
-        FlexBox loopCtlFb;
-        loopCtlFb.flexDirection = FlexBox::Direction::row;
-        loopCtlFb.justifyContent = FlexBox::JustifyContent::center;
-        loopCtlFb.items.addArray({
-                FlexItem(*m_loopingToggle).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0)),
-                FlexItem(*m_currentPositionLabel).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0))
-            });
 
         fb.items.addArray({
             FlexItem(*m_openButton).withFlex(1).withMargin(FlexItem::Margin(30, 10, 5, 10)).withMaxHeight(30),
