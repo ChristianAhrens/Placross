@@ -12,6 +12,9 @@
 
 #include <JuceHeader.h>
 
+#include "AudioPlayerTitleTableModel.h"
+#include "AudioPlayerTitleTableListBox.h"
+
 #include "../submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.h"
 
 //==============================================================================
@@ -60,10 +63,19 @@ protected:
 private:
     enum TransportState
     {
-        Stopped,
-        Starting,
-        Playing,
-        Stopping
+        TS_Stopped,
+        TS_Starting,
+        TS_Playing,
+        TS_Stopping
+    };
+
+    enum TableHeaderColumn
+    {
+        THC_Invalid,
+        THC_Title,
+        THC_Artist,
+        THC_Album,
+        THC_Length,
     };
 
     void changeTransportState (TransportState newState);
@@ -81,17 +93,22 @@ private:
     Listener* m_listener{ nullptr };
 
     //==========================================================================
-    std::unique_ptr<TextButton> m_openButton;
+    std::unique_ptr<TextButton>     m_openButton;
     std::unique_ptr<DrawableButton> m_playPauseButton;
     std::unique_ptr<DrawableButton> m_nextButton;
     std::unique_ptr<DrawableButton> m_prevButton;
-    std::unique_ptr<ToggleButton> m_loopingToggle;
-    std::unique_ptr<Label> m_currentPositionLabel;
+    std::unique_ptr<ToggleButton>   m_loopingToggle;
+    std::unique_ptr<Label>          m_currentPositionLabel;
 
-    AudioFormatManager m_formatManager;
-    std::unique_ptr<AudioFormatReaderSource> m_readerSource;
-    AudioTransportSource m_transportSource;
-    TransportState m_transportState;
+    //==========================================================================
+    std::unique_ptr<AudioPlayerTitleTableModel>     m_tableModel;
+    std::unique_ptr<AudioPlayerTitleTableListBox>   m_tableListBox;
+
+    //==========================================================================
+    AudioFormatManager                          m_formatManager;
+    std::unique_ptr<AudioFormatReaderSource>    m_readerSource;
+    AudioTransportSource                        m_transportSource;
+    TransportState                              m_transportState;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioPlayerComponent)
 };

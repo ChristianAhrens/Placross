@@ -14,7 +14,7 @@
 
 //==============================================================================
 AudioPlayerComponent::AudioPlayerComponent()
-    : m_transportState(Stopped)
+    : m_transportState(TS_Stopped)
 {
     std::unique_ptr<juce::Drawable> NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage;
 
@@ -55,8 +55,22 @@ AudioPlayerComponent::AudioPlayerComponent()
     addAndMakeVisible(m_currentPositionLabel.get());
     m_currentPositionLabel->setText ("Stopped", dontSendNotification);
 
+    m_tableModel = std::make_unique<AudioPlayerTitleTableModel>();
+    m_tableListBox = std::make_unique<AudioPlayerTitleTableListBox>();
+    m_tableListBox->setModel(m_tableModel.get());
+    // Add columns to the table header
+    int tableHeaderFlags = (TableHeaderComponent::visible | TableHeaderComponent::sortable);
+    m_tableListBox->getHeader().addColumn("Title", THC_Title, 50, 30, -1, tableHeaderFlags);
+    m_tableListBox->getHeader().addColumn("Artist", THC_Artist, 50, 30, -1, tableHeaderFlags);
+    m_tableListBox->getHeader().addColumn("Album", THC_Album, 50, 30, -1, tableHeaderFlags);
+    m_tableListBox->getHeader().addColumn("Length", THC_Length, 50, 30, -1, tableHeaderFlags);
+    m_tableListBox->getHeader().setSortColumnId(THC_Title, true); // sort forwards by the Input number column
+    m_tableListBox->getHeader().setStretchToFitActive(true);
+    addAndMakeVisible(m_tableListBox.get());
+
     m_formatManager.registerBasicFormats();
     m_transportSource.addChangeListener (this);
+
 
     startTimer (20);
 }
@@ -144,6 +158,7 @@ void AudioPlayerComponent::resized()
         fb.items.addArray({
             FlexItem(*m_openButton).withFlex(1).withMargin(FlexItem::Margin(30, 10, 5, 10)).withMaxHeight(30),
             FlexItem(playCtlFb).withFlex(2).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxHeight(80),
+            FlexItem(*m_tableListBox).withFlex(4).withMargin(FlexItem::Margin(5, 5, 5, 5)),
             FlexItem(loopCtlFb).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxHeight(30)
             });
     }
@@ -179,9 +194,9 @@ void AudioPlayerComponent::changeListenerCallback (ChangeBroadcaster* source)
     if (source == &m_transportSource)
     {
         if (m_transportSource.isPlaying())
-            changeTransportState(Playing);
+            changeTransportState(TS_Playing);
         else
-            changeTransportState(Stopped);
+            changeTransportState(TS_Stopped);
     }
 }
 
@@ -225,24 +240,24 @@ void AudioPlayerComponent::changeTransportState(TransportState newState)
 
         switch (m_transportState)
         {
-            case Stopped:
+            case TS_Stopped:
                 m_transportSource.setPosition (0.0);
                 break;
 
-            case Starting:
+            case TS_Starting:
                 m_playPauseButton->setEnabled(false);
                 m_prevButton->setEnabled(false);
                 m_nextButton->setEnabled(false);
                 m_transportSource.start();
                 break;
 
-            case Playing:
+            case TS_Playing:
                 m_playPauseButton->setEnabled(true);
                 m_prevButton->setEnabled(true);
                 m_nextButton->setEnabled(true);
                 break;
 
-            case Stopping:
+            case TS_Stopping:
                 m_transportSource.stop();
                 break;
         }
@@ -283,24 +298,24 @@ void AudioPlayerComponent::openButtonClicked()
 void AudioPlayerComponent::playButtonClicked()
 {
     updateLoopState (m_loopingToggle->getToggleState());
-    changeTransportState(Starting);
+    changeTransportState(TS_Starting);
 }
 
 void AudioPlayerComponent::stopButtonClicked()
 {
-    changeTransportState(Stopping);
+    changeTransportState(TS_Stopping);
 }
 
 void AudioPlayerComponent::playPauseButtonClicked()
 {
-    if (getCurrentTransportState() == Playing)
+    if (getCurrentTransportState() == TS_Playing)
     {
-        changeTransportState(Stopping);
+        changeTransportState(TS_Stopping);
     }
     else
     {
         updateLoopState(m_loopingToggle->getToggleState());
-        changeTransportState(Starting);
+        changeTransportState(TS_Starting);
     }
 }
 

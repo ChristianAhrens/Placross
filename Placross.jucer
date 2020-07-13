@@ -71,6 +71,14 @@
               file="Source/AudioPlayer/AudioPlayerComponent.cpp"/>
         <FILE id="aXMar6" name="AudioPlayerComponent.h" compile="0" resource="0"
               file="Source/AudioPlayer/AudioPlayerComponent.h"/>
+        <FILE id="hI0EoA" name="AudioPlayerTitleTableListBox.cpp" compile="1"
+              resource="0" file="Source/AudioPlayer/AudioPlayerTitleTableListBox.cpp"/>
+        <FILE id="ALUYOx" name="AudioPlayerTitleTableListBox.h" compile="0"
+              resource="0" file="Source/AudioPlayer/AudioPlayerTitleTableListBox.h"/>
+        <FILE id="D6tzuk" name="AudioPlayerTitleTableModel.cpp" compile="1"
+              resource="0" file="Source/AudioPlayer/AudioPlayerTitleTableModel.cpp"/>
+        <FILE id="LPttQM" name="AudioPlayerTitleTableModel.h" compile="0" resource="0"
+              file="Source/AudioPlayer/AudioPlayerTitleTableModel.h"/>
       </GROUP>
       <GROUP id="{CBA03720-F3C9-6E88-0106-2781A5BAD1DF}" name="ChannelStrip">
         <FILE id="PXaXhG" name="ChannelStripComponent.cpp" compile="1" resource="0"
