@@ -55,8 +55,6 @@ AudioPlayerComponent::AudioPlayerComponent()
     addAndMakeVisible(m_currentPositionLabel.get());
     m_currentPositionLabel->setText ("Stopped", dontSendNotification);
 
-    setSize (300, 300);
-
     m_formatManager.registerBasicFormats();
     m_transportSource.addChangeListener (this);
 
@@ -143,7 +141,6 @@ void AudioPlayerComponent::resized()
     // layout all elements for maximized mode
     if(getCurrentOverlayState() == maximized)
     {
-
         fb.items.addArray({
             FlexItem(*m_openButton).withFlex(1).withMargin(FlexItem::Margin(30, 10, 5, 10)).withMaxHeight(30),
             FlexItem(playCtlFb).withFlex(2).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxHeight(80),

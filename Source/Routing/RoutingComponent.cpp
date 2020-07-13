@@ -23,8 +23,6 @@ RoutingComponent::RoutingComponent()
     m_sumButton->addListener(this);
 
     setIOCount(2, 2);
-
-	setSize(600, 460);
 }
 
 RoutingComponent::~RoutingComponent()

@@ -117,7 +117,7 @@
             }
 
             fb.items.addArray({
-                FlexItem(*m_playerComponent.get()).withMinHeight(100).withMargin(FlexItem::Margin(10,10,0,10)),
+                FlexItem(*m_playerComponent.get()).withMinHeight(90).withMargin(FlexItem::Margin(10,10,0,10)),
                 FlexItem(*m_routingComponent.get()).withMinHeight(45).withMargin(FlexItem::Margin(10,10,0,10)),
                 FlexItem(nestedFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(5,5,5,5))
                 });
