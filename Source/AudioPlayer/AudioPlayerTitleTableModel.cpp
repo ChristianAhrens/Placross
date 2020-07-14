@@ -21,6 +21,13 @@ AudioPlayerTitleTableModel::~AudioPlayerTitleTableModel()
 
 }
 
+void AudioPlayerTitleTableModel::setRowBackgroundColours(Colour& normalColour, Colour& highlightColour, Colour& lineColour)
+{
+	m_normalColour = normalColour;
+	m_highlightColour = highlightColour;
+	m_lineColour = lineColour;
+}
+
 int AudioPlayerTitleTableModel::getNumRows()
 {
 	return 20;
@@ -32,13 +39,13 @@ void AudioPlayerTitleTableModel::paintRowBackground(Graphics& g, int rowNumber, 
 
 	// Selected rows have a different background color.
 	if (rowIsSelected)
-		g.setColour(Colours::green.brighter());
+		g.setColour(m_highlightColour);
 	else
-		g.setColour(Colours::green);
+		g.setColour(m_normalColour);
 	g.fillRect(0, 0, width, height - 1);
 
 	// Line between rows.
-	g.setColour(Colours::green.darker());
+	g.setColour(m_lineColour);
 	g.fillRect(0, height - 1, width, height - 1);
 }
 

@@ -93,7 +93,7 @@ private:
     Listener* m_listener{ nullptr };
 
     //==========================================================================
-    std::unique_ptr<TextButton>     m_openButton;
+    std::unique_ptr<DrawableButton> m_openButton;
     std::unique_ptr<DrawableButton> m_playPauseButton;
     std::unique_ptr<DrawableButton> m_nextButton;
     std::unique_ptr<DrawableButton> m_prevButton;

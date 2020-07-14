@@ -18,10 +18,11 @@ AudioPlayerComponent::AudioPlayerComponent()
 {
     std::unique_ptr<juce::Drawable> NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage;
 
-    m_openButton = std::make_unique<TextButton>();
+    m_openButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageOnButtonBackground);
     addAndMakeVisible(m_openButton.get());
-    m_openButton->setButtonText ("Open...");
     m_openButton->onClick = [this] { openButtonClicked(); };
+    JUCEAppBasics::Image_utils::getDrawableButtonImages(BinaryData::folder_open24px_svg, NormalImage, OverImage, DownImage, DisabledImage, NormalOnImage, OverOnImage, DownOnImage, DisabledOnImage);
+    m_openButton->setImages(NormalImage.get(), OverImage.get(), DownImage.get(), DisabledImage.get(), NormalOnImage.get(), OverOnImage.get(), DownOnImage.get(), DisabledOnImage.get());
 
     m_playPauseButton = std::make_unique<DrawableButton>(String(), DrawableButton::ButtonStyle::ImageFitted);
     addAndMakeVisible(m_playPauseButton.get());
@@ -56,6 +57,10 @@ AudioPlayerComponent::AudioPlayerComponent()
     m_currentPositionLabel->setText ("Stopped", dontSendNotification);
 
     m_tableModel = std::make_unique<AudioPlayerTitleTableModel>();
+    m_tableModel->setRowBackgroundColours(
+        getLookAndFeel().findColour(TableHeaderComponent::ColourIds::backgroundColourId),
+        getLookAndFeel().findColour(TableHeaderComponent::ColourIds::highlightColourId),
+        getLookAndFeel().findColour(TableHeaderComponent::ColourIds::outlineColourId));
     m_tableListBox = std::make_unique<AudioPlayerTitleTableListBox>();
     m_tableListBox->setModel(m_tableModel.get());
     // Add columns to the table header
