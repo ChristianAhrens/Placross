@@ -30,6 +30,7 @@ public:
     class Listener
     {
     public:
+        virtual ~Listener() {};
         virtual void onNewAudiofileLoaded() = 0;
     };
 

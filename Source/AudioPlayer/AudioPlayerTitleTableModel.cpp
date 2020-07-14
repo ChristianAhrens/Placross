@@ -21,7 +21,7 @@ AudioPlayerTitleTableModel::~AudioPlayerTitleTableModel()
 
 }
 
-void AudioPlayerTitleTableModel::setRowBackgroundColours(Colour& normalColour, Colour& highlightColour, Colour& lineColour)
+void AudioPlayerTitleTableModel::setRowBackgroundColours(const Colour& normalColour, const Colour& highlightColour, const Colour& lineColour)
 {
 	m_normalColour = normalColour;
 	m_highlightColour = highlightColour;

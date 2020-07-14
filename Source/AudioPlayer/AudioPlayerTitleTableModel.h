@@ -27,7 +27,7 @@ public:
     AudioPlayerTitleTableModel();
     ~AudioPlayerTitleTableModel() override;
 
-    void setRowBackgroundColours(Colour &normalColour, Colour &highlightColour, Colour &lineColour);
+    void setRowBackgroundColours(const Colour &normalColour, const Colour &highlightColour, const Colour &lineColour);
 
     //==============================================================================
     int getNumRows() override;
