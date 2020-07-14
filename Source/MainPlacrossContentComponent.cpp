@@ -137,6 +137,8 @@
             if (m_stripComponents.count(i) == 0)
             {
                 m_stripComponents[i] = std::make_unique<ChannelStripComponent>();
+                m_stripComponents[i]->addOverlayParent(this);
+                m_stripComponents[i]->parentResize = [this] { resized(); };
                 addAndMakeVisible(m_stripComponents.at(i).get());
             }
         }

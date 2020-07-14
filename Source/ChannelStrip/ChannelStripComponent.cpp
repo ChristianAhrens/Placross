@@ -26,14 +26,10 @@ ChannelStripComponent::~ChannelStripComponent()
 	destroyAudioNodes();
 }
 
-void ChannelStripComponent::paint(Graphics& g)
-{
-	g.setColour(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
-	g.fillRect(getLocalBounds().toFloat());
-}
-
 void ChannelStripComponent::resized()
 {
+	OverlayToggleComponentBase::resized();
+
 	FlexBox fb;
 	fb.flexDirection = FlexBox::Direction::column;
 	fb.justifyContent = FlexBox::JustifyContent::center;
@@ -47,7 +43,7 @@ void ChannelStripComponent::resized()
 		}
 	}
 
-	fb.performLayout(getLocalBounds().reduced(10).toFloat());
+	fb.performLayout(getOverlayBounds().reduced(10).toFloat());
 }
 
 void ChannelStripComponent::initialiseGraph()

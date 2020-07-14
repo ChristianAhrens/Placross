@@ -15,8 +15,10 @@
 #include "ChannelStripProcessorPlayer.h"
 #include "ChannelStripProcessor.h"
 
+#include "../submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.h"
+
 //==============================================================================
-class ChannelStripComponent  :  public Component,
+class ChannelStripComponent  :  public JUCEAppBasics::OverlayToggleComponentBase,
                                 public AudioIODeviceCallback
 {
 public:
@@ -29,7 +31,6 @@ public:
     ~ChannelStripComponent() override;
 
     //==============================================================================
-    void paint (Graphics& g) override;
     void resized() override;
 
     //==============================================================================
