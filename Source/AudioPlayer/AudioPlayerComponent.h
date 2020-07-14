@@ -73,8 +73,6 @@ private:
     {
         THC_Invalid,
         THC_Title,
-        THC_Artist,
-        THC_Album,
         THC_Length,
     };
 

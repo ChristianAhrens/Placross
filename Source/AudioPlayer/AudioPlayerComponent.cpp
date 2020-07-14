@@ -64,11 +64,8 @@ AudioPlayerComponent::AudioPlayerComponent()
     m_tableListBox = std::make_unique<AudioPlayerTitleTableListBox>();
     m_tableListBox->setModel(m_tableModel.get());
     // Add columns to the table header
-    int tableHeaderFlags = (TableHeaderComponent::visible | TableHeaderComponent::sortable);
-    m_tableListBox->getHeader().addColumn("Title", THC_Title, 50, 30, -1, tableHeaderFlags);
-    m_tableListBox->getHeader().addColumn("Artist", THC_Artist, 50, 30, -1, tableHeaderFlags);
-    m_tableListBox->getHeader().addColumn("Album", THC_Album, 50, 30, -1, tableHeaderFlags);
-    m_tableListBox->getHeader().addColumn("Length", THC_Length, 50, 30, -1, tableHeaderFlags);
+    m_tableListBox->getHeader().addColumn("Title", THC_Title, 120);
+    m_tableListBox->getHeader().addColumn("", THC_Length, 30);
     m_tableListBox->getHeader().setSortColumnId(THC_Title, true); // sort forwards by the Input number column
     m_tableListBox->getHeader().setStretchToFitActive(true);
     addAndMakeVisible(m_tableListBox.get());
@@ -284,7 +281,8 @@ void AudioPlayerComponent::openButtonClicked()
     {
         auto file = chooser.getResult();
         auto* reader = m_formatManager.createReaderFor (file);
-
+        m_tableModel->addTitle(std::make_pair(file.getFullPathName().toStdString(), 60));
+        m_tableListBox->updateContent();
         if (reader != nullptr)
         {
             std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (reader, true));                

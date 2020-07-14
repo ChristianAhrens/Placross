@@ -30,7 +30,7 @@ void AudioPlayerTitleTableModel::setRowBackgroundColours(Colour& normalColour, C
 
 int AudioPlayerTitleTableModel::getNumRows()
 {
-	return 20;
+	return static_cast<int>(m_IdTitleKV.size());
 }
 
 void AudioPlayerTitleTableModel::paintRowBackground(Graphics& g, int rowNumber, int width, int height, bool rowIsSelected)
@@ -57,4 +57,24 @@ void AudioPlayerTitleTableModel::paintCell(Graphics& g, int rowNumber, int colum
 	ignoreUnused(width);
 	ignoreUnused(height);
 	ignoreUnused(rowIsSelected);
+}
+
+void AudioPlayerTitleTableModel::addTitles(const std::vector<std::pair<std::string, int>> &titles)
+{
+	for (auto const& title : titles)
+		addTitle(title);
+}
+
+void AudioPlayerTitleTableModel::addTitle(const std::pair<std::string, int> &title)
+{
+	for(auto const & titleKV : m_IdTitleKV)
+		if(titleKV.second == title)
+			return;
+
+	m_IdTitleKV.insert(std::make_pair(getNextTitleId(), title));
+}
+
+int AudioPlayerTitleTableModel::getNextTitleId()
+{
+	return ++m_TitleId;
 }
