@@ -131,13 +131,13 @@ void AudioPlayerComponent::resized()
 {
     OverlayToggleComponentBase::resized();
 
+    auto isPortrait = getOverlayBounds().getHeight() > getOverlayBounds().getWidth();
+
     FlexBox fb;
-    fb.flexDirection = FlexBox::Direction::column;
     fb.justifyContent = FlexBox::JustifyContent::flexStart;
 
     // we are using the prev/play/next buttons section in both maximized and minimized mode
     FlexBox playCtlFb;
-    playCtlFb.flexDirection = FlexBox::Direction::row;
     playCtlFb.justifyContent = FlexBox::JustifyContent::center;
     playCtlFb.items.addArray({
             FlexItem(*m_prevButton).withFlex(1).withMargin(FlexItem::Margin(15, 5, 15, 5)),
@@ -154,20 +154,53 @@ void AudioPlayerComponent::resized()
             FlexItem(*m_currentPositionLabel).withFlex(1).withMargin(FlexItem::Margin(5, 0, 5, 0))
         });
 
+    // The table and loop control shall always be in a column
+    FlexBox tableLoopFb;
+    tableLoopFb.flexDirection = FlexBox::Direction::column;
+    tableLoopFb.justifyContent = FlexBox::JustifyContent::center;
+    tableLoopFb.items.addArray({
+                FlexItem(*m_tableListBox).withFlex(4).withMargin(FlexItem::Margin(5, 5, 5, 5)),
+                FlexItem(loopCtlFb).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxHeight(30)
+        });
+
     // layout all elements for maximized mode
     if(getCurrentOverlayState() == maximized)
     {
-        fb.items.addArray({
-            FlexItem(*m_openButton).withFlex(1).withMargin(FlexItem::Margin(30, 10, 5, 10)).withMaxHeight(30),
-            FlexItem(playCtlFb).withFlex(2).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxHeight(80),
-            FlexItem(*m_tableListBox).withFlex(4).withMargin(FlexItem::Margin(5, 5, 5, 5)),
-            FlexItem(loopCtlFb).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxHeight(30)
-            });
+        if (isPortrait)
+        {
+            playCtlFb.flexDirection = FlexBox::Direction::row;
+            fb.flexDirection = FlexBox::Direction::column;
+            fb.items.addArray({
+                FlexItem(*m_openButton).withFlex(1).withMargin(FlexItem::Margin(30, 10, 5, 10)).withMaxHeight(30),
+                FlexItem(playCtlFb).withFlex(2).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxHeight(80),
+                FlexItem(tableLoopFb).withFlex(5).withMargin(FlexItem::Margin(5, 5, 5, 5))
+                });
+        }
+        else
+        {
+            playCtlFb.flexDirection = FlexBox::Direction::column;
+            fb.flexDirection = FlexBox::Direction::row;
+            fb.items.addArray({
+                FlexItem(*m_openButton).withFlex(1).withMargin(FlexItem::Margin(30, 10, 5, 10)).withMaxWidth(30),
+                FlexItem(playCtlFb).withFlex(2).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxWidth(80),
+                FlexItem(tableLoopFb).withFlex(5).withMargin(FlexItem::Margin(5, 5, 5, 5))
+                });
+        }
     }
     // and only the player section in minimized mode
     else if (getCurrentOverlayState() == minimized)
     {
-        fb.items.add(FlexItem(playCtlFb).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxHeight(80));
+        fb.flexDirection = FlexBox::Direction::column;
+        if (isPortrait)
+        {
+            playCtlFb.flexDirection = FlexBox::Direction::column;
+            fb.items.add(FlexItem(playCtlFb).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxWidth(80));
+        }
+        else
+        {
+            playCtlFb.flexDirection = FlexBox::Direction::row;
+            fb.items.add(FlexItem(playCtlFb).withFlex(1).withMargin(FlexItem::Margin(5, 10, 5, 10)).withMaxHeight(80));
+        }
     }
         
     fb.performLayout(getOverlayBounds().toFloat());
@@ -182,12 +215,14 @@ void AudioPlayerComponent::changeOverlayState()
         m_openButton->setVisible(true);
         m_loopingToggle->setVisible(true);
         m_currentPositionLabel->setVisible(true);
+        m_tableListBox->setVisible(true);
     }
     else if (getCurrentOverlayState() == minimized)
     {
         m_openButton->setVisible(false);
         m_loopingToggle->setVisible(false);
         m_currentPositionLabel->setVisible(false);
+        m_tableListBox->setVisible(false);
     }
 }
 

@@ -30,8 +30,10 @@ void ChannelStripComponent::resized()
 {
 	OverlayToggleComponentBase::resized();
 
+	auto isPortrait = getLocalBounds().getHeight() > getLocalBounds().getWidth();
+
 	FlexBox fb;
-	fb.flexDirection = FlexBox::Direction::column;
+	fb.flexDirection = isPortrait ? FlexBox::Direction::column : FlexBox::Direction::row;
 	fb.justifyContent = FlexBox::JustifyContent::center;
 
 	for (auto& node : m_mainProcessor->getNodes())
