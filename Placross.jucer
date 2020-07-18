@@ -60,6 +60,12 @@
       </GROUP>
     </GROUP>
     <GROUP id="{0480E33C-041F-2346-F9AA-44BBEAD80CFE}" name="Source">
+      <GROUP id="{50AF3D88-12DA-CD17-8BBD-96EE91223F96}" name="Analyser">
+        <FILE id="BdcHwb" name="AnalyserComponent.cpp" compile="1" resource="0"
+              file="Source/Analyser/AnalyserComponent.cpp"/>
+        <FILE id="dyMWtY" name="AnalyserComponent.h" compile="0" resource="0"
+              file="Source/Analyser/AnalyserComponent.h"/>
+      </GROUP>
       <GROUP id="{6E7706A6-E68A-010C-A28E-4D2B70FE95DB}" name="Routing">
         <FILE id="G0pPlU" name="RoutingComponent.cpp" compile="1" resource="0"
               file="Source/Routing/RoutingComponent.cpp"/>

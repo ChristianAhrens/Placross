@@ -15,6 +15,7 @@
 #include "AudioPlayer/AudioPlayerComponent.h"
 #include "Routing/RoutingComponent.h"
 #include "ChannelStrip/ChannelStripComponent.h"
+#include "Analyser/AnalyserComponent.h"
 
 #include "../submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.h"
 
@@ -52,6 +53,7 @@ private:
     std::unique_ptr<AudioPlayerComponent>                   m_playerComponent;
     std::unique_ptr<RoutingComponent>                       m_routingComponent;
     std::map<int, std::unique_ptr<ChannelStripComponent>>   m_stripComponents;
+    std::unique_ptr<AnalyserComponent>                      m_analyserComponent;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainPlacrossContentComponent)
 };

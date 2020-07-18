@@ -26,6 +26,11 @@
         m_routingComponent->parentResize = [this] { resized(); };
         addAndMakeVisible(m_routingComponent.get());
 
+        m_analyserComponent = std::make_unique<AnalyserComponent>();
+        m_analyserComponent->addOverlayParent(this);
+        m_analyserComponent->parentResize = [this] { resized(); };
+        addAndMakeVisible(m_analyserComponent.get());
+
         // Specify the number of output channels that we want to open
         setChannelSetup(m_playerComponent->getCurrentChannelCount(), getCurrentDeviceChannelCount().second);
 
@@ -46,6 +51,8 @@
 
         for (auto& stripComponentKV : m_stripComponents)
             stripComponentKV.second->audioDeviceAboutToStart(deviceManager.getCurrentAudioDevice());
+
+        m_analyserComponent->audioDeviceAboutToStart(deviceManager.getCurrentAudioDevice());
     }
 
     void MainPlacrossContentComponent::getNextAudioBlock (const AudioSourceChannelInfo& info)
@@ -56,7 +63,7 @@
         // ... run it through routing
         m_routingComponent->audioDeviceIOCallback(info.buffer->getArrayOfReadPointers(), info.buffer->getNumChannels(), info.buffer->getArrayOfWritePointers(), info.buffer->getNumChannels(), info.numSamples); // @TODO: info.startSample is not regarded here!!
 
-        // ... and run it through the processorGraphs for each channel
+        // ... run it through the processorGraphs for each channel
         for (auto i = 0; i < info.buffer->getNumChannels(); ++i)
         {
             if (m_stripComponents.count(i) != 0 && m_stripComponents.at(i))
@@ -67,6 +74,9 @@
                 strip->audioDeviceIOCallback(&ReadPointer, 1, &WritePointer, 1, info.numSamples);
             }
         }
+
+        // ... and run it through routing
+        m_analyserComponent->audioDeviceIOCallback(info.buffer->getArrayOfReadPointers(), info.buffer->getNumChannels(), info.buffer->getArrayOfWritePointers(), info.buffer->getNumChannels(), info.numSamples); // @TODO: info.startSample is not regarded here!!
     }
 
     void MainPlacrossContentComponent::releaseResources()
@@ -116,7 +126,8 @@
                 fb.items.addArray({
                     FlexItem(*m_playerComponent.get()).withMinHeight(90).withMargin(FlexItem::Margin(10,10,0,10)),
                     FlexItem(*m_routingComponent.get()).withMinHeight(45).withMargin(FlexItem::Margin(10,10,0,10)),
-                    FlexItem(nestedFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(5,5,5,5))
+                    FlexItem(nestedFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(5,5,5,5)),
+                    FlexItem(*m_analyserComponent.get()).withMinHeight(150).withMargin(FlexItem::Margin(0,10,10,10))
                     });
                 fb.performLayout(safeBounds.toFloat());
             }
@@ -137,7 +148,8 @@
                 fb.items.addArray({
                     FlexItem(*m_playerComponent.get()).withMinWidth(90).withMargin(FlexItem::Margin(10,0,10,10)),
                     FlexItem(*m_routingComponent.get()).withMinWidth(45).withMargin(FlexItem::Margin(10,0,10,10)),
-                    FlexItem(nestedFb).withFlex(1).withMinWidth(150).withMargin(FlexItem::Margin(5,5,5,5))
+                    FlexItem(nestedFb).withFlex(1).withMinWidth(150).withMargin(FlexItem::Margin(5,5,5,5)),
+                    FlexItem(*m_analyserComponent.get()).withMinWidth(150).withMargin(FlexItem::Margin(10,10,10,0))
                     });
                 fb.performLayout(safeBounds.toFloat());
             }
