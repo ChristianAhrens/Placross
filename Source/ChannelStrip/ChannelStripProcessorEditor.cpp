@@ -334,6 +334,7 @@ public:
         }
 
         slider.setRange(rangeMin, rangeMax, rangeStep);
+        slider.setSkewFactorFromMidPoint(rangeMax/5);
 
         addAndMakeVisible(slider);
 
