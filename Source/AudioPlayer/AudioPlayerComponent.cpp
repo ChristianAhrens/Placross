@@ -57,10 +57,11 @@ AudioPlayerComponent::AudioPlayerComponent()
     m_currentPositionLabel->setText ("Stopped", dontSendNotification);
 
     m_tableModel = std::make_unique<AudioPlayerTitleTableModel>();
-    m_tableModel->setRowBackgroundColours(
+    m_tableModel->setCellColours(
         getLookAndFeel().findColour(TableHeaderComponent::ColourIds::backgroundColourId),
         getLookAndFeel().findColour(TableHeaderComponent::ColourIds::highlightColourId),
-        getLookAndFeel().findColour(TableHeaderComponent::ColourIds::outlineColourId));
+        getLookAndFeel().findColour(TableHeaderComponent::ColourIds::outlineColourId),
+        getLookAndFeel().findColour(TableHeaderComponent::ColourIds::textColourId));
     m_tableListBox = std::make_unique<AudioPlayerTitleTableListBox>();
     m_tableListBox->setModel(m_tableModel.get());
     // Add columns to the table header
@@ -243,11 +244,12 @@ void AudioPlayerComponent::timerCallback()
     {
         RelativeTime position (m_transportSource.getCurrentPosition());
 
-        auto minutes = ((int) position.inMinutes()) % 60;
-        auto seconds = ((int) position.inSeconds()) % 60;
-        auto millis  = ((int) position.inMilliseconds()) % 1000;
+        auto hours = ((int)position.inHours()) % 60;
+        auto minutes = ((int)position.inMinutes()) % 60;
+        auto seconds = ((int)position.inSeconds()) % 60;
+        auto millis = ((int)position.inMilliseconds()) % 1000;
 
-        auto positionString = String::formatted ("%02d:%02d:%03d", minutes, seconds, millis);
+        auto positionString = String::formatted("%02d:%02d:%02d:%03d", hours, minutes, seconds, millis);
 
         m_currentPositionLabel->setText (positionString, dontSendNotification);
     }
@@ -316,10 +318,12 @@ void AudioPlayerComponent::openButtonClicked()
     {
         auto file = chooser.getResult();
         auto* reader = m_formatManager.createReaderFor (file);
-        m_tableModel->addTitle(std::make_pair(file.getFullPathName().toStdString(), 60));
-        m_tableListBox->updateContent();
         if (reader != nullptr)
         {
+            auto lengthInMilliSec = (reader->lengthInSamples / (reader->sampleRate * 0.001f));
+            m_tableModel->addTitle(std::make_pair(file.getFullPathName().toStdString(), lengthInMilliSec));
+            m_tableListBox->updateContent();
+
             std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (reader, true));                
             m_transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate, reader->numChannels);
             m_playPauseButton->setEnabled(true);

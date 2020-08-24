@@ -27,7 +27,7 @@ public:
     AudioPlayerTitleTableModel();
     ~AudioPlayerTitleTableModel() override;
 
-    void setRowBackgroundColours(const Colour &normalColour, const Colour &highlightColour, const Colour &lineColour);
+    void setCellColours(const Colour &normalColour, const Colour &highlightColour, const Colour &lineColour, const Colour &textColour);
 
     //==============================================================================
     int getNumRows() override;
@@ -47,6 +47,7 @@ private:
     Colour m_normalColour{ Colours::black };
     Colour m_highlightColour{ Colours::black };
     Colour m_lineColour{ Colours::black };
+    Colour m_textColour{ Colours::black };
 
     //==============================================================================
     std::map<int, std::pair<std::string, int>>  m_IdTitleKV;

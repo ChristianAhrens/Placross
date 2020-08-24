@@ -21,11 +21,12 @@ AudioPlayerTitleTableModel::~AudioPlayerTitleTableModel()
 
 }
 
-void AudioPlayerTitleTableModel::setRowBackgroundColours(const Colour& normalColour, const Colour& highlightColour, const Colour& lineColour)
+void AudioPlayerTitleTableModel::setCellColours(const Colour& normalColour, const Colour& highlightColour, const Colour& lineColour, const Colour& textColour)
 {
 	m_normalColour = normalColour;
 	m_highlightColour = highlightColour;
 	m_lineColour = lineColour;
+	m_textColour = textColour;
 }
 
 int AudioPlayerTitleTableModel::getNumRows()
@@ -51,12 +52,42 @@ void AudioPlayerTitleTableModel::paintRowBackground(Graphics& g, int rowNumber, 
 
 void AudioPlayerTitleTableModel::paintCell(Graphics& g, int rowNumber, int columnId, int width, int height, bool rowIsSelected)
 {
-	ignoreUnused(g);
-	ignoreUnused(rowNumber);
-	ignoreUnused(columnId);
-	ignoreUnused(width);
-	ignoreUnused(height);
 	ignoreUnused(rowIsSelected);
+
+	auto cellRect = Rectangle<int>(width, height);
+
+	auto mapKey = rowNumber + 1;
+
+	if (m_IdTitleKV.count(mapKey) > 0)
+	{
+		String cellText;
+
+		if (columnId == 1)
+		{
+			File f(m_IdTitleKV.at(mapKey).first);
+
+			cellText = f.getFileName();
+		}
+		else if (columnId == 2)
+		{
+			double secondsInMilliPrecision = m_IdTitleKV.at(mapKey).second * 0.001f;
+			RelativeTime position(secondsInMilliPrecision);
+
+			auto hours = ((int)position.inHours()) % 60;
+			auto minutes = ((int)position.inMinutes()) % 60;
+			auto seconds = ((int)position.inSeconds()) % 60;
+			auto millis = ((int)position.inMilliseconds()) % 1000;
+
+			cellText = String::formatted("%02d:%02d:%02d:%03d", hours, minutes, seconds, millis);
+		}
+		else
+		{
+			cellText = String();
+		}
+
+		g.setColour(m_textColour);
+		g.drawFittedText(cellText, cellRect, Justification::centredLeft, 1);
+	}
 }
 
 void AudioPlayerTitleTableModel::addTitles(const std::vector<std::pair<std::string, int>> &titles)
