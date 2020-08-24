@@ -23,6 +23,11 @@ AnalyserComponent::~AnalyserComponent()
 {
 }
 
+void AnalyserComponent::setChannelColours(const std::vector<Colour>& colours)
+{
+    m_channelColours = colours;
+}
+
 void AnalyserComponent::paint(Graphics& g)
 {
     OverlayToggleComponentBase::paint(g);
@@ -87,7 +92,8 @@ void AnalyserComponent::paint(Graphics& g)
 
                 path.lineTo(juce::Point<float>(newPointX, newPointY));
             }
-            g.setColour(Colours::forestgreen);
+            jassert(m_channelColours.size() >= ch);
+            g.setColour(m_channelColours.at(ch));
             g.strokePath(path, PathStrokeType(3));
         }
     }

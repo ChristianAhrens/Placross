@@ -40,6 +40,8 @@ public:
     AnalyserComponent();
     ~AnalyserComponent() override;
 
+    void setChannelColours(const std::vector<Colour>& colours);
+
     //==============================================================================
     void paint(Graphics& g) override;
     void resized() override;
@@ -105,6 +107,8 @@ private:
     int                                 m_plotChannels;
     std::map<int, std::vector<float>>   m_plotPointsPeak;
     std::map<int, std::vector<float>>   m_plotPointsHold;
+
+    std::vector<Colour> m_channelColours;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AnalyserComponent)

@@ -19,6 +19,8 @@
 
 #include "../submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.h"
 
+class CircleComponent;
+
 //==============================================================================
 /*
     This component lives inside our window, and this is where you should put all
@@ -51,9 +53,14 @@ public:
 private:
     //==========================================================================
     std::unique_ptr<AudioPlayerComponent>                   m_playerComponent;
+    std::vector<std::unique_ptr<CircleComponent>>           m_playerConCircles;
     std::unique_ptr<RoutingComponent>                       m_routingComponent;
+    std::vector<std::unique_ptr<CircleComponent>>           m_routingConCircles;
     std::map<int, std::unique_ptr<ChannelStripComponent>>   m_stripComponents;
+    std::vector<std::unique_ptr<CircleComponent>>           m_stripConCircles;
     std::unique_ptr<AnalyserComponent>                      m_analyserComponent;
+
+    std::vector<Colour> m_channelColours;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainPlacrossContentComponent)
 };
