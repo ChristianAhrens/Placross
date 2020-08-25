@@ -30,6 +30,8 @@ public:
     ChannelStripComponent();
     ~ChannelStripComponent() override;
 
+    void setChannelColour(const Colour& colour);
+
     //==============================================================================
     void resized() override;
 

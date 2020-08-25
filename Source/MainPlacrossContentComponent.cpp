@@ -34,8 +34,8 @@ public:
         // (Our component is opaque, so we must completely fill the background with a solid colour)
         g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId).darker());
 
-        auto h = getHeight();
-        auto w = getWidth();
+        auto h = static_cast<float>(getHeight());
+        auto w = static_cast<float>(getWidth());
         Rectangle<float> smallestSquareRect;
         if (w < h)
         {
@@ -348,9 +348,9 @@ void MainPlacrossContentComponent::setChannelSetup(int numInputChannels, int num
     while (m_channelColours.size() < numInputChannels || m_channelColours.size() < numOutputChannels)
     {
         // dont use full 8-bits per channel, but only values from 40-216, to avoid sharp colours
-        auto r = 40 + Random::getSystemRandom().nextInt(216);
-        auto g = 40 + Random::getSystemRandom().nextInt(216);
-        auto b = 40 + Random::getSystemRandom().nextInt(216);
+        auto r = uint8(50 + Random::getSystemRandom().nextInt(206));
+        auto g = uint8(50 + Random::getSystemRandom().nextInt(206));
+        auto b = uint8(50 + Random::getSystemRandom().nextInt(206));
 
         m_channelColours.push_back(Colour(r, g, b));
     }
@@ -363,6 +363,9 @@ void MainPlacrossContentComponent::setChannelSetup(int numInputChannels, int num
     {
         m_routingConCircles.at(i)->setCircleColour(m_channelColours.at(i));
         m_stripConCircles.at(i)->setCircleColour(m_channelColours.at(i));
+
+        if (m_stripComponents.count(i) > 0)
+            m_stripComponents.at(i)->setChannelColour(m_channelColours.at(i));
     }
     m_analyserComponent->setChannelColours(m_channelColours);
 }

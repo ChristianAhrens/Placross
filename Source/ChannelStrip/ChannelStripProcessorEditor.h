@@ -19,6 +19,8 @@ public:
     ChannelStripProcessorEditor(AudioProcessor&);
     ~ChannelStripProcessorEditor() override;
 
+    void setChannelColour(const Colour& colour);
+
     //==============================================================================
     void resized() override;
 

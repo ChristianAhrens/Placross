@@ -358,6 +358,11 @@ public:
         slider.setBounds(getLocalBounds());
     }
 
+    void setKnobColour(const Colour& colour)
+    {
+        slider.setColour(Slider::ColourIds::thumbColourId, colour);
+    }
+
 private:
     void handleNewParameterValue() override
     {
@@ -441,6 +446,13 @@ public:
         fb.performLayout(getLocalBounds().toFloat());
     }
 
+    void setChannelColour(const Colour& colour)
+    {
+        auto sliderComp = dynamic_cast<SliderParameterComponent*>(parameterComp.get());
+        if (sliderComp)
+            sliderComp->setKnobColour(colour);
+    }
+
 private:
     AudioProcessorParameter& parameter;
     Label parameterName;
@@ -517,6 +529,14 @@ public:
         fb.performLayout(getLocalBounds().toFloat());
     }
 
+    void setChannelColour(const Colour& colour)
+    {
+        for (auto* comp : paramComponents)
+        {
+            comp->setChannelColour(colour);
+        }
+    }
+
 private:
     OwnedArray<ParameterDisplayComponent> paramComponents;
 
@@ -553,6 +573,13 @@ struct ChannelStripProcessorEditor::Pimpl
         content->setSize(view.getWidth(), content->getHeight());
     }
 
+    void setChannelColour(const Colour& colour)
+    {
+        auto ppanel = dynamic_cast<ParametersPanel*>(view.getViewedComponent());
+        if (ppanel)
+            ppanel->setChannelColour(colour);
+    }
+
     //==============================================================================
     ChannelStripProcessorEditor& owner;
     juce::LegacyAudioParametersWrapper legacyParameters;
@@ -571,9 +598,16 @@ ChannelStripProcessorEditor::ChannelStripProcessorEditor(AudioProcessor& p)
     setOpaque(false);
 }
 
-ChannelStripProcessorEditor::~ChannelStripProcessorEditor() {}
+ChannelStripProcessorEditor::~ChannelStripProcessorEditor()
+{
+}
 
 void ChannelStripProcessorEditor::resized()
 {
     pimpl->resize(getLocalBounds());
+}
+
+void ChannelStripProcessorEditor::setChannelColour(const Colour& colour)
+{
+    pimpl->setChannelColour(colour);
 }

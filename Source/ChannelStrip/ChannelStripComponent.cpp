@@ -10,6 +10,7 @@
 
 #include "ChannelStripComponent.h"
 #include "ChannelStripProcessor.h"
+#include "ChannelStripProcessorEditor.h"
 
 ChannelStripComponent::ChannelStripComponent()
 	: m_mainProcessor(new AudioProcessorGraph())
@@ -24,6 +25,29 @@ ChannelStripComponent::~ChannelStripComponent()
 	auto device = MidiInput::getDefaultDevice();
 
 	destroyAudioNodes();
+}
+
+void ChannelStripComponent::setChannelColour(const Colour& colour)
+{
+	if (m_mainProcessor)
+	{
+		for (auto const& node : m_mainProcessor->getNodes())
+		{
+			if (node)
+			{
+				auto processor = node->getProcessor();
+				if (processor)
+				{
+					auto editor = dynamic_cast<ChannelStripProcessorEditor*>(node->getProcessor()->getActiveEditor());
+					if (editor)
+					{
+						editor->setChannelColour(colour);
+					}
+				}
+			}
+		}
+
+	}
 }
 
 void ChannelStripComponent::resized()
