@@ -34,7 +34,18 @@ public:
         // (Our component is opaque, so we must completely fill the background with a solid colour)
         g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId).darker());
 
-        auto smallestSquareRect = getWidth() < getHeight() ? Rectangle<float>(getWidth(), getWidth()) : Rectangle<float>(getHeight(), getHeight());
+        auto h = getHeight();
+        auto w = getWidth();
+        Rectangle<float> smallestSquareRect;
+        if (w < h)
+        {
+            smallestSquareRect = Rectangle<float>(0, 0.5f * (h - w), w, w);
+        }
+        else
+        {
+            smallestSquareRect = Rectangle<float>(0.5f * (w - h), 0, h, h);
+        }
+
         g.setColour(m_circleColour);
         g.fillEllipse(smallestSquareRect);
     };
@@ -151,10 +162,6 @@ void MainPlacrossContentComponent::resized()
     {
         if (isPortrait)
         {
-            FlexBox fb;
-            fb.flexDirection =  FlexBox::Direction::column;
-            fb.justifyContent = FlexBox::JustifyContent::center;
-
             FlexBox playerCirclesFb;
             playerCirclesFb.flexDirection = FlexBox::Direction::row;
             playerCirclesFb.items.add(FlexItem().withFlex(3));
@@ -189,23 +196,22 @@ void MainPlacrossContentComponent::resized()
                 stripCirclesFb.items.add(FlexItem().withFlex(2));
             }
 
+
+            FlexBox fb;
+            fb.flexDirection = FlexBox::Direction::column;
             fb.items.addArray({
                 FlexItem(*m_playerComponent.get()).withMinHeight(90).withMargin(FlexItem::Margin(10,10,0,10)),
-                FlexItem(playerCirclesFb).withMinHeight(10).withMargin(FlexItem::Margin(0,0,0,20)),
+                FlexItem(playerCirclesFb).withMinHeight(10),
                 FlexItem(*m_routingComponent.get()).withMinHeight(45).withMargin(FlexItem::Margin(0,10,0,10)),
-                FlexItem(routingCirclesFb).withMinHeight(10).withMargin(FlexItem::Margin(0,0,0,15)),
+                FlexItem(routingCirclesFb).withMinHeight(10),
                 FlexItem(stripComponentsFb).withFlex(1).withMinHeight(150).withMargin(FlexItem::Margin(0,5,0,5)),
-                FlexItem(stripCirclesFb).withMinHeight(10).withMargin(FlexItem::Margin(0,0,0,15)),
+                FlexItem(stripCirclesFb).withMinHeight(10),
                 FlexItem(*m_analyserComponent.get()).withMinHeight(150).withMargin(FlexItem::Margin(0,10,10,10))
                 });
             fb.performLayout(safeBounds.toFloat());
         }
         else
         {
-            FlexBox fb;
-            fb.flexDirection = FlexBox::Direction::row;
-            fb.justifyContent = FlexBox::JustifyContent::center;
-
             FlexBox playerCirclesFb;
             playerCirclesFb.flexDirection = FlexBox::Direction::column;
             playerCirclesFb.items.add(FlexItem().withFlex(3));
@@ -241,13 +247,16 @@ void MainPlacrossContentComponent::resized()
                 stripCirclesFb.items.add(FlexItem().withFlex(2));
             }
 
+
+            FlexBox fb;
+            fb.flexDirection = FlexBox::Direction::row;
             fb.items.addArray({
                 FlexItem(*m_playerComponent.get()).withMinWidth(90).withMargin(FlexItem::Margin(10,0,10,10)),
-                FlexItem(playerCirclesFb).withMinWidth(10).withMargin(FlexItem::Margin(20,0,0,0)),
+                FlexItem(playerCirclesFb).withMinWidth(10),
                 FlexItem(*m_routingComponent.get()).withMinWidth(45).withMargin(FlexItem::Margin(10,0,10,0)),
-                FlexItem(routingCirclesFb).withMinWidth(10).withMargin(FlexItem::Margin(15,0,0,0)),
+                FlexItem(routingCirclesFb).withMinWidth(10),
                 FlexItem(stripComponentsFb).withFlex(1).withMinWidth(150).withMargin(FlexItem::Margin(5,0,5,0)),
-                FlexItem(stripCirclesFb).withMinWidth(10).withMargin(FlexItem::Margin(15,0,0,0)),
+                FlexItem(stripCirclesFb).withMinWidth(10),
                 FlexItem(*m_analyserComponent.get()).withMinWidth(150).withMargin(FlexItem::Margin(10,10,10,0))
                 });
             fb.performLayout(safeBounds.toFloat());
