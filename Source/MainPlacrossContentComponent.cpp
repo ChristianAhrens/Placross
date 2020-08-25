@@ -262,24 +262,52 @@ void MainPlacrossContentComponent::onNewAudiofileLoaded()
 
 void MainPlacrossContentComponent::setChannelSetup(int numInputChannels, int numOutputChannels, const XmlElement* const storedSettings)
 {
+    // add or remove connection indication circle components
+    // for player block depending on new input channel count
+    while (m_playerConCircles.size() > numInputChannels)
+    {
+        removeChildComponent(m_playerConCircles.back().get());
+        m_playerConCircles.pop_back();
+    }
     while (m_playerConCircles.size() < numInputChannels)
     {
         auto circle = std::make_unique<CircleComponent>();
         addAndMakeVisible(circle.get());
         m_playerConCircles.push_back(std::move(circle));
     }
-
+    
+    // add or remove channel strip components
+    // for player block depending on new output channel count
+    std::vector<int> stripsToRemove;
+    for(auto const& stripComponentKV : m_stripComponents)
+    {
+        auto stripChNum = stripComponentKV.first + 1;
+        if(stripChNum > numOutputChannels)
+            stripsToRemove.push_back(stripComponentKV.first);
+    }
+    for(auto ch : stripsToRemove)
+    {
+        removeChildComponent(m_stripComponents.at(ch).get());
+        m_stripComponents.erase(ch);
+    }
     for (auto i = 0; i < numOutputChannels; ++i)
     {
         if (m_stripComponents.count(i) == 0)
         {
             m_stripComponents[i] = std::make_unique<ChannelStripComponent>();
-            m_stripComponents[i]->addOverlayParent(this);
-            m_stripComponents[i]->parentResize = [this] { resized(); };
+            m_stripComponents.at(i)->addOverlayParent(this);
+            m_stripComponents.at(i)->parentResize = [this] { resized(); };
             addAndMakeVisible(m_stripComponents.at(i).get());
         }
     }
-
+    
+    // add or remove connection indication circle components
+    // for channelstrip block depending on new output channel count
+    while (m_stripConCircles.size() > numOutputChannels)
+    {
+        removeChildComponent(m_stripConCircles.back().get());
+        m_stripConCircles.pop_back();
+    }
     while (m_stripConCircles.size() < numOutputChannels)
     {
         auto circle = std::make_unique<CircleComponent>();
@@ -287,8 +315,16 @@ void MainPlacrossContentComponent::setChannelSetup(int numInputChannels, int num
         m_stripConCircles.push_back(std::move(circle));
     }
 
+    // update the rounting components io count accordingly
     m_routingComponent->setIOCount(numInputChannels, numOutputChannels);
 
+    // add or remove connection indication circle components
+    // for routing block depending on new output channel count
+    while (m_routingConCircles.size() > numOutputChannels)
+    {
+        removeChildComponent(m_routingConCircles.back().get());
+        m_routingConCircles.pop_back();
+    }
     while (m_routingConCircles.size() < numOutputChannels)
     {
         auto circle = std::make_unique<CircleComponent>();
