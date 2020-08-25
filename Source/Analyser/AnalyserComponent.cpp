@@ -287,6 +287,8 @@ void AnalyserComponent::handleMessage(const Message& message)
             {
                 m_centiSecondBuffer.copyFrom(i, writePos, buffer.getReadPointer(i) + readPos, availableSamples);
             }
+            
+            m_missingSamplesForCentiSecond -= availableSamples;
         }
 
         repaint();
