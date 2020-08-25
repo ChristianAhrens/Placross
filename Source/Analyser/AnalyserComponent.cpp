@@ -184,6 +184,17 @@ void AnalyserComponent::handleMessage(const Message& message)
         auto buffer = m->getAudioBuffer();
 
         int numChannels = buffer.getNumChannels();
+        
+        // adjust member vectormaps if data requires it
+        if (m_plotChannels < numChannels)
+        {
+            m_plotChannels = numChannels;
+            for (int ch = 0; ch < m_plotChannels; ++ch)
+            {
+                m_plotPointsHold.insert(std::make_pair(ch, std::vector<float>(m_freqBands)));
+                m_plotPointsPeak.insert(std::make_pair(ch, std::vector<float>(m_freqBands)));
+            }
+        }
 
         if (numChannels != m_centiSecondBuffer.getNumChannels())
             m_centiSecondBuffer.setSize(numChannels, m_samplesPerCentiSecond, false, true, true);
@@ -194,17 +205,6 @@ void AnalyserComponent::handleMessage(const Message& message)
         int writePos = m_samplesPerCentiSecond - m_missingSamplesForCentiSecond;
         while (availableSamples >= m_missingSamplesForCentiSecond)
         {
-            // adjust member vectormaps if data requires it
-            if (m_plotChannels != numChannels)
-            {
-                m_plotChannels = numChannels;
-                for (int ch = 0; ch < m_plotChannels; ++ch)
-                {
-                    m_plotPointsHold.insert(std::make_pair(ch, std::vector<float>(m_freqBands)));
-                    m_plotPointsPeak.insert(std::make_pair(ch, std::vector<float>(m_freqBands)));
-                }
-            }
-
             for (int ch = 0; ch < numChannels; ++ch)
             {
                 // generate signal buffer data
