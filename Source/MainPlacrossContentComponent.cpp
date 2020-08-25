@@ -13,6 +13,8 @@
 #include "../submodules/JUCE-AppBasics/Source/iOS_utils.hpp"
 
 
+static constexpr int MAX_SUPPORTED_OUTPUTS = 10;
+
 //==============================================================================
 class CircleComponent : public Component
 {
@@ -66,6 +68,8 @@ private:
 //==============================================================================
 MainPlacrossContentComponent::MainPlacrossContentComponent()
 {
+    deviceManager.initialiseWithDefaultDevices(0, MAX_SUPPORTED_OUTPUTS);
+    
     m_playerComponent = std::make_unique<AudioPlayerComponent>();
     m_playerComponent->addListener(this);
     m_playerComponent->addOverlayParent(this);
