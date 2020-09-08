@@ -61,6 +61,9 @@ void AnalyserComponent::paint(Graphics& g)
             auto minPlotIdx = jlimit(0, static_cast<int>(m_plotPointsPeak.at(ch).size() - 1), (minPlotFreq - static_cast<int>(m_minFreq)) / static_cast<int>(m_freqRes));
             auto maxPlotIdx = jlimit(0, static_cast<int>(m_plotPointsPeak.at(ch).size() - 1), (maxPlotFreq - static_cast<int>(m_minFreq)) / static_cast<int>(m_freqRes));
 
+            jassert(m_channelColours.size() >= ch);
+            g.setColour(m_channelColours.at(ch));
+            
             // hold curve
             auto path = Path{};
             auto skewedProportionX = 1.0f / (log10(maxPlotFreq) - 1.0f) * (log10((minPlotIdx + 1) * m_freqRes) - 1.0f);
@@ -75,7 +78,6 @@ void AnalyserComponent::paint(Graphics& g)
 
                 path.lineTo(juce::Point<float>(newPointX, newPointY));
             }
-            g.setColour(Colours::grey);
             g.strokePath(path, PathStrokeType(1));
 
             // peak curve
@@ -92,8 +94,6 @@ void AnalyserComponent::paint(Graphics& g)
 
                 path.lineTo(juce::Point<float>(newPointX, newPointY));
             }
-            jassert(m_channelColours.size() >= ch);
-            g.setColour(m_channelColours.at(ch));
             g.strokePath(path, PathStrokeType(3));
         }
     }
