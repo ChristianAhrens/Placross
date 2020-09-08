@@ -239,7 +239,9 @@ void AudioPlayerComponent::changeListenerCallback (ChangeBroadcaster* source)
 {
     if (source == &m_transportSource)
     {
-        if (m_transportSource.isPlaying())
+        if (m_transportSource.hasStreamFinished() && (m_transportState == TS_Playing))
+            playNextAudioFile();
+        else if (m_transportSource.isPlaying())
             changeTransportState(TS_Playing);
         else
             changeTransportState(TS_Stopped);
@@ -299,6 +301,24 @@ void AudioPlayerComponent::loadAudioFile(const File& file)
         if (m_listener)
             m_listener->onNewAudiofileLoaded();
     }
+}
+
+void AudioPlayerComponent::playNextAudioFile()
+{
+    auto currentSelectedRows = m_tableListBox->getSelectedRows();
+    if (m_tableModel->selectNextTitle(currentSelectedRows))
+        changeTransportState(TS_Starting);
+    else
+        changeTransportState(TS_Stopped);
+}
+
+void AudioPlayerComponent::playPrevAudioFile()
+{
+    auto currentSelectedRows = m_tableListBox->getSelectedRows();
+    if (m_tableModel->selectPrevTitle(currentSelectedRows))
+        changeTransportState(TS_Starting);
+    else
+        changeTransportState(TS_Stopped);
 }
 
 void AudioPlayerComponent::changeTransportState(TransportState newState)
@@ -377,12 +397,12 @@ void AudioPlayerComponent::playPauseButtonClicked()
 
 void AudioPlayerComponent::nextButtonClicked()
 {
-
+    playNextAudioFile();
 }
 
 void AudioPlayerComponent::prevButtonClicked()
 {
-
+    playPrevAudioFile();
 }
 
 void AudioPlayerComponent::loopButtonChanged()

@@ -40,6 +40,9 @@ public:
     std::vector<int> addTitles(const std::vector<std::pair<std::string, int>> &titles);
     int addTitle(const std::pair<std::string, int> &title);
     int getNextTitleId();
+    
+    bool selectNextTitle(const SparseSet<int>& currentSelectedRows);
+    bool selectPrevTitle(const SparseSet<int>& currentSelectedRows);
 
     //==============================================================================
     std::function<void(String)>   titleSelected;

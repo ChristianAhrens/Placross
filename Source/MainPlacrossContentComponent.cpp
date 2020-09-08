@@ -372,6 +372,9 @@ void MainPlacrossContentComponent::setChannelSetup(int numInputChannels, int num
             m_stripComponents.at(i)->setChannelColour(m_channelColours.at(i));
     }
     m_analyserComponent->setChannelColours(m_channelColours);
+    
+    // trigger one resize to update the UI arrangement if neccessary
+    resized();
 }
 
 std::pair<int, int> MainPlacrossContentComponent::getCurrentDeviceChannelCount()

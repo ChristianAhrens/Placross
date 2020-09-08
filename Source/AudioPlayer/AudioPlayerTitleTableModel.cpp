@@ -140,3 +140,37 @@ int AudioPlayerTitleTableModel::getNextTitleId()
 {
 	return ++m_TitleId;
 }
+
+bool AudioPlayerTitleTableModel::selectNextTitle(const SparseSet<int>& currentSelectedRows)
+{
+    jassert(currentSelectedRows.size() == 1); // we only support single selection at the moment
+    
+    auto mapKey = currentSelectedRows[0] + 1;
+    auto nextMapKey = mapKey + 1;
+    
+    if (m_IdTitleKV.count(nextMapKey) == 1)
+    {
+        auto titleName = m_IdTitleKV.at(nextMapKey).first;
+        titleSelected(titleName);
+        return true;
+    }
+    else
+        return false;
+}
+
+bool AudioPlayerTitleTableModel::selectPrevTitle(const SparseSet<int>& currentSelectedRows)
+{
+    jassert(currentSelectedRows.size() == 1); // we only support single selection at the moment
+    
+    auto mapKey = currentSelectedRows[0] + 1;
+    auto prevMapKey = mapKey - 1;
+    
+    if (m_IdTitleKV.count(prevMapKey) == 1)
+    {
+        auto titleName = m_IdTitleKV.at(prevMapKey).first;
+        titleSelected(titleName);
+        return true;
+    }
+    else
+        return false;
+}

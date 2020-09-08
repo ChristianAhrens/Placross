@@ -79,6 +79,8 @@ private:
     };
     
     void loadAudioFile(const File& file);
+    void playNextAudioFile();
+    void playPrevAudioFile();
     
     void changeTransportState (TransportState newState);
     TransportState getCurrentTransportState();
