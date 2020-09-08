@@ -39,6 +39,7 @@ public:
     virtual ~AudioPlayerComponent();
 
     int getCurrentChannelCount();
+    void onAudioTitleSelected(String titleName);
 
     //==========================================================================
     void prepareToPlay (int samplesPerBlockExpected, double sampleRate) override;
@@ -76,7 +77,9 @@ private:
         THC_Title,
         THC_Length,
     };
-
+    
+    void loadAudioFile(const File& file);
+    
     void changeTransportState (TransportState newState);
     TransportState getCurrentTransportState();
 

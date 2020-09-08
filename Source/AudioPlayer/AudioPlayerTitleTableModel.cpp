@@ -90,19 +90,50 @@ void AudioPlayerTitleTableModel::paintCell(Graphics& g, int rowNumber, int colum
 	}
 }
 
-void AudioPlayerTitleTableModel::addTitles(const std::vector<std::pair<std::string, int>> &titles)
+void AudioPlayerTitleTableModel::cellClicked (int rowNumber, int columnId, const MouseEvent& e)
 {
-	for (auto const& title : titles)
-		addTitle(title);
+    ignoreUnused(columnId);
+    ignoreUnused(e);
+    
+    auto mapKey = rowNumber + 1;
+    if (m_IdTitleKV.count(mapKey) > 0)
+    {
+        auto titleName = m_IdTitleKV.at(mapKey).first;
+        titleSelected(titleName);
+    }
 }
 
-void AudioPlayerTitleTableModel::addTitle(const std::pair<std::string, int> &title)
+void AudioPlayerTitleTableModel::cellDoubleClicked (int rowNumber, int columnId, const MouseEvent& e)
+{
+    ignoreUnused(rowNumber);
+    ignoreUnused(columnId);
+    ignoreUnused(e);
+}
+
+std::vector<int> AudioPlayerTitleTableModel::addTitles(const std::vector<std::pair<std::string, int>> &titles)
+{
+    std::vector<int> rowNumbers;
+	for (auto const& title : titles)
+        rowNumbers.push_back (addTitle(title));
+    
+    return rowNumbers;
+}
+
+int AudioPlayerTitleTableModel::addTitle(const std::pair<std::string, int> &title)
 {
 	for(auto const & titleKV : m_IdTitleKV)
+    {
 		if(titleKV.second == title)
-			return;
+        {
+            return (titleKV.first - 1);
+        }
+    }
 
-	m_IdTitleKV.insert(std::make_pair(getNextTitleId(), title));
+    int titleId = getNextTitleId();
+	m_IdTitleKV.insert(std::make_pair(titleId, title));
+    int rowNumber = (titleId - 1);
+    
+    return rowNumber;
 }
 
 int AudioPlayerTitleTableModel::getNextTitleId()

@@ -62,7 +62,9 @@ AudioPlayerComponent::AudioPlayerComponent()
         getLookAndFeel().findColour(TableHeaderComponent::ColourIds::highlightColourId),
         getLookAndFeel().findColour(TableHeaderComponent::ColourIds::outlineColourId),
         getLookAndFeel().findColour(TableHeaderComponent::ColourIds::textColourId));
+    m_tableModel->titleSelected = [this](String titleName) { onAudioTitleSelected(titleName); };
     m_tableListBox = std::make_unique<AudioPlayerTitleTableListBox>();
+    m_tableListBox->setMultipleSelectionEnabled(false);
     m_tableListBox->setModel(m_tableModel.get());
     // Add columns to the table header
     m_tableListBox->getHeader().addColumn("Title", THC_Title, 120);
@@ -88,6 +90,12 @@ int AudioPlayerComponent::getCurrentChannelCount()
         return m_readerSource->getAudioFormatReader()->numChannels;
     else
         return 2;
+}
+
+void AudioPlayerComponent::onAudioTitleSelected(String titleName)
+{
+    File audioFile(titleName);
+    loadAudioFile(audioFile);
 }
 
 void AudioPlayerComponent::prepareToPlay (int samplesPerBlockExpected, double sampleRate)
@@ -271,6 +279,28 @@ void AudioPlayerComponent::updateLoopState (bool shouldLoop)
         m_readerSource->setLooping (shouldLoop);
 }
 
+void AudioPlayerComponent::loadAudioFile(const File& file)
+{
+    auto* reader = m_formatManager.createReaderFor (file);
+    if (reader != nullptr)
+    {
+        auto lengthInMilliSec = (reader->lengthInSamples / (reader->sampleRate * 0.001f));
+        auto rowNumber = m_tableModel->addTitle(std::make_pair(file.getFullPathName().toStdString(), lengthInMilliSec));
+        m_tableListBox->updateContent();
+        m_tableListBox->selectRow(rowNumber);
+
+        std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (reader, true));
+        m_transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate, reader->numChannels);
+        m_playPauseButton->setEnabled(true);
+        m_prevButton->setEnabled(true);
+        m_nextButton->setEnabled(true);
+        m_readerSource.reset (newSource.release());
+
+        if (m_listener)
+            m_listener->onNewAudiofileLoaded();
+    }
+}
+
 void AudioPlayerComponent::changeTransportState(TransportState newState)
 {
     if (m_transportState != newState)
@@ -317,23 +347,7 @@ void AudioPlayerComponent::openButtonClicked()
     if (chooser.browseForFileToOpen())
     {
         auto file = chooser.getResult();
-        auto* reader = m_formatManager.createReaderFor (file);
-        if (reader != nullptr)
-        {
-            auto lengthInMilliSec = (reader->lengthInSamples / (reader->sampleRate * 0.001f));
-            m_tableModel->addTitle(std::make_pair(file.getFullPathName().toStdString(), lengthInMilliSec));
-            m_tableListBox->updateContent();
-
-            std::unique_ptr<AudioFormatReaderSource> newSource (new AudioFormatReaderSource (reader, true));                
-            m_transportSource.setSource (newSource.get(), 0, nullptr, reader->sampleRate, reader->numChannels);
-            m_playPauseButton->setEnabled(true);
-            m_prevButton->setEnabled(true);
-            m_nextButton->setEnabled(true);
-            m_readerSource.reset (newSource.release());
-
-            if (m_listener)
-                m_listener->onNewAudiofileLoaded();
-        }
+        loadAudioFile(file);
     }
 }
 

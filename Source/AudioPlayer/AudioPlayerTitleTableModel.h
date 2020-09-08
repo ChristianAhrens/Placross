@@ -33,14 +33,16 @@ public:
     int getNumRows() override;
     void paintRowBackground(Graphics& g, int rowNumber, int width, int height, bool rowIsSelected) override;
     void paintCell(Graphics& g, int rowNumber, int columnId, int width, int height, bool rowIsSelected) override;
+    void cellClicked (int rowNumber, int columnId, const MouseEvent&) override;
+    void cellDoubleClicked (int rowNumber, int columnId, const MouseEvent&) override;
 
     //==============================================================================
-    void addTitles(const std::vector<std::pair<std::string, int>> &titles);
-    void addTitle(const std::pair<std::string, int> &titles);
+    std::vector<int> addTitles(const std::vector<std::pair<std::string, int>> &titles);
+    int addTitle(const std::pair<std::string, int> &title);
     int getNextTitleId();
 
     //==============================================================================
-    std::function<void()>   titleSelected;
+    std::function<void(String)>   titleSelected;
 
 private:
     //==============================================================================
