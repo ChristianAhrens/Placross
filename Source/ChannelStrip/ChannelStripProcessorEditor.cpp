@@ -333,17 +333,17 @@ public:
             rangeStep = fParam->getNormalisableRange().interval;
         }
 
-        slider.setRange(rangeMin, rangeMax, rangeStep);
-        slider.setSkewFactorFromMidPoint(rangeMax/5);
+        m_slider.setRange(rangeMin, rangeMax, rangeStep);
+        m_slider.setSkewFactorFromMidPoint(rangeMax/5);
 
-        addAndMakeVisible(slider);
+        addAndMakeVisible(m_slider);
 
         // Set the initial value.
         handleNewParameterValue();
 
-        slider.onValueChange = [this] { sliderValueChanged(); };
-        slider.onDragStart = [this] { sliderStartedDragging(); };
-        slider.onDragEnd = [this] { sliderStoppedDragging(); };
+        m_slider.onValueChange = [this] { sliderValueChanged(); };
+        m_slider.onDragStart = [this] { sliderStartedDragging(); };
+        m_slider.onDragEnd = [this] { sliderStoppedDragging(); };
 
         setSize(80, 80);
     }
@@ -355,18 +355,18 @@ public:
 
     void resized() override
     {
-        slider.setBounds(getLocalBounds());
+        m_slider.setBounds(getLocalBounds());
     }
 
     void setKnobColour(const Colour& colour)
     {
-        slider.setColour(Slider::ColourIds::thumbColourId, colour);
+        m_slider.setColour(Slider::ColourIds::thumbColourId, colour);
     }
 
 private:
     void handleNewParameterValue() override
     {
-        if (!isDragging)
+        if (!m_isDragging)
         {
             auto defaultVal = 1.0f;
             auto param = &getParameter();
@@ -377,40 +377,41 @@ private:
             else
                 defaultVal = param->getValue();
             
-            slider.setValue(defaultVal, dontSendNotification);
+            m_slider.setValue(defaultVal, dontSendNotification);
         }
     }
 
     void sliderValueChanged()
     {
-        auto newVal = (float)slider.getValue();
+        auto newVal = (float)m_slider.getValue();
 
         if (getParameter().getValue() != newVal)
         {
-            if (!isDragging)
+            if (!m_isDragging)
                 getParameter().beginChangeGesture();
 
-            getParameter().setValueNotifyingHost((float)slider.getValue());
+            getParameter().setValueNotifyingHost((float)m_slider.getValue());
 
-            if (!isDragging)
+            if (!m_isDragging)
                 getParameter().endChangeGesture();
         }
     }
 
     void sliderStartedDragging()
     {
-        isDragging = true;
+        m_isDragging = true;
         getParameter().beginChangeGesture();
     }
 
     void sliderStoppedDragging()
     {
-        isDragging = false;
+        m_isDragging = false;
         getParameter().endChangeGesture();
     }
 
-    Slider slider{ Slider::Rotary, Slider::TextEntryBoxPosition::TextBoxBelow };
-    bool isDragging = false;
+private:
+    Slider m_slider{ Slider::Rotary, Slider::TextEntryBoxPosition::TextBoxBelow };
+    bool m_isDragging = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SliderParameterComponent)
 };
@@ -420,16 +421,16 @@ class ParameterDisplayComponent : public Component
 {
 public:
     ParameterDisplayComponent(AudioProcessor& processor, AudioProcessorParameter& param)
-        : parameter(param)
+        : m_parameter(param)
     {
-        parameterName.setText(parameter.getName(128), dontSendNotification);
-        parameterName.setJustificationType(Justification::left);
-        addAndMakeVisible(parameterName);
+        m_parameterName.setText(m_parameter.getName(128), dontSendNotification);
+        m_parameterName.setJustificationType(Justification::left);
+        addAndMakeVisible(m_parameterName);
 
-        addAndMakeVisible(*(parameterComp = createParameterComp(processor)));
+        addAndMakeVisible(*(m_parameterComp = createParameterComp(processor)));
         
-        int maxWidth = jmax(400, parameterComp->getWidth());
-        int height = jmax(20, 20 + parameterComp->getHeight());
+        int maxWidth = jmax(400, m_parameterComp->getWidth());
+        int height = jmax(20, 20 + m_parameterComp->getHeight());
 
         setSize(maxWidth, height);
     }
@@ -440,23 +441,23 @@ public:
         fb.flexDirection = FlexBox::Direction::column;
         fb.justifyContent = FlexBox::JustifyContent::flexStart;
         fb.items.addArray({
-            FlexItem(parameterName).withFlex(1),
-            FlexItem(*parameterComp).withFlex(5)
+            FlexItem(m_parameterName).withFlex(1),
+            FlexItem(*m_parameterComp).withFlex(5)
             });
         fb.performLayout(getLocalBounds().toFloat());
     }
 
     void setChannelColour(const Colour& colour)
     {
-        auto sliderComp = dynamic_cast<SliderParameterComponent*>(parameterComp.get());
+        auto sliderComp = dynamic_cast<SliderParameterComponent*>(m_parameterComp.get());
         if (sliderComp)
             sliderComp->setKnobColour(colour);
     }
 
 private:
-    AudioProcessorParameter& parameter;
-    Label parameterName;
-    std::unique_ptr<Component> parameterComp;
+    AudioProcessorParameter& m_parameter;
+    Label m_parameterName;
+    std::unique_ptr<Component> m_parameterComp;
 
     std::unique_ptr<Component> createParameterComp(AudioProcessor& processor) const
     {
@@ -464,22 +465,22 @@ private:
         // marking a parameter as boolean. If you want consistency across
         // all  formats then it might be best to use a
         // SwitchParameterComponent instead.
-        if (parameter.isBoolean())
-            return std::make_unique<BooleanParameterComponent>(processor, parameter);
+        if (m_parameter.isBoolean())
+            return std::make_unique<BooleanParameterComponent>(processor, m_parameter);
 
         // Most hosts display any parameter with just two steps as a switch.
-        if (parameter.getNumSteps() == 2)
-            return std::make_unique<SwitchParameterComponent>(processor, parameter);
+        if (m_parameter.getNumSteps() == 2)
+            return std::make_unique<SwitchParameterComponent>(processor, m_parameter);
 
         // If we have a list of strings to represent the different states a
         // parameter can be in then we should present a dropdown allowing a
         // user to pick one of them.
-        if (!parameter.getAllValueStrings().isEmpty()
-            && std::abs(parameter.getNumSteps() - parameter.getAllValueStrings().size()) <= 1)
-            return std::make_unique<ChoiceParameterComponent>(processor, parameter);
+        if (!m_parameter.getAllValueStrings().isEmpty()
+            && std::abs(m_parameter.getNumSteps() - m_parameter.getAllValueStrings().size()) <= 1)
+            return std::make_unique<ChoiceParameterComponent>(processor, m_parameter);
 
         // Everything else can be represented as a slider.
-        return std::make_unique<SliderParameterComponent>(processor, parameter);
+        return std::make_unique<SliderParameterComponent>(processor, m_parameter);
     }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParameterDisplayComponent)
@@ -493,12 +494,12 @@ public:
     {
         for (auto* param : parameters)
             if (param->isAutomatable())
-                addAndMakeVisible(paramComponents.add(new ParameterDisplayComponent(processor, *param)));
+                addAndMakeVisible(m_paramComponents.add(new ParameterDisplayComponent(processor, *param)));
 
         int maxWidth = 400;
         int height = 0;
 
-        for (auto& comp : paramComponents)
+        for (auto& comp : m_paramComponents)
         {
             maxWidth = jmax(maxWidth, comp->getWidth());
             height += comp->getHeight();
@@ -509,7 +510,7 @@ public:
 
     ~ParametersPanel() override
     {
-        paramComponents.clear();
+        m_paramComponents.clear();
     }
 
     void paint(Graphics& /*g*/) override
@@ -522,7 +523,7 @@ public:
         FlexBox fb;
         fb.flexDirection = FlexBox::Direction::column;
         fb.justifyContent = FlexBox::JustifyContent::flexStart;
-        for (auto* comp : paramComponents)
+        for (auto* comp : m_paramComponents)
         {
             fb.items.add(FlexItem(*comp).withFlex(1));
         }
@@ -531,14 +532,14 @@ public:
 
     void setChannelColour(const Colour& colour)
     {
-        for (auto* comp : paramComponents)
+        for (auto* comp : m_paramComponents)
         {
             comp->setChannelColour(colour);
         }
     }
 
 private:
-    OwnedArray<ParameterDisplayComponent> paramComponents;
+    OwnedArray<ParameterDisplayComponent> m_paramComponents;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParametersPanel)
 };
@@ -546,44 +547,50 @@ private:
 //==============================================================================
 struct ChannelStripProcessorEditor::Pimpl
 {
-    Pimpl(ChannelStripProcessorEditor& parent) : owner(parent)
+    Pimpl(ChannelStripProcessorEditor& parent) : m_owner(parent)
     {
         auto* p = parent.getAudioProcessor();
         jassert(p != nullptr);
 
-        legacyParameters.update(*p, false);
+        m_legacyParameters.update(*p, false);
 
-        owner.setOpaque(true);
+        m_owner.setOpaque(true);
 
-        view.setViewedComponent(new ParametersPanel(*p, legacyParameters.params));
-        owner.addAndMakeVisible(view);
+        m_view.setViewedComponent(new ParametersPanel(*p, m_legacyParameters.params));
+        m_owner.addAndMakeVisible(m_view);
 
-        view.setScrollBarsShown(true, true);
+        m_view.setScrollBarsShown(true, true);
     }
 
     ~Pimpl()
     {
-        view.setViewedComponent(nullptr, false);
+        m_view.setViewedComponent(nullptr, false);
     }
 
     void resize(Rectangle<int> size)
     {
-        view.setBounds(size);
-        auto content = view.getViewedComponent();
-        content->setSize(view.getWidth(), content->getHeight());
+        m_view.setBounds(size);
+        auto content = m_view.getViewedComponent();
+        content->setSize(m_view.getWidth(), content->getHeight());
     }
 
     void setChannelColour(const Colour& colour)
     {
-        auto ppanel = dynamic_cast<ParametersPanel*>(view.getViewedComponent());
+        auto ppanel = dynamic_cast<ParametersPanel*>(m_view.getViewedComponent());
         if (ppanel)
             ppanel->setChannelColour(colour);
     }
 
+    Viewport* GetView()
+    {
+        return &m_view;
+    }
+
+private:
     //==============================================================================
-    ChannelStripProcessorEditor& owner;
-    juce::LegacyAudioParametersWrapper legacyParameters;
-    Viewport view;
+    ChannelStripProcessorEditor& m_owner;
+    juce::LegacyAudioParametersWrapper m_legacyParameters;
+    Viewport m_view;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Pimpl)
 };
@@ -592,8 +599,8 @@ struct ChannelStripProcessorEditor::Pimpl
 ChannelStripProcessorEditor::ChannelStripProcessorEditor(AudioProcessor& p)
     : AudioProcessorEditor(p), pimpl(new Pimpl(*this))
 {
-    setSize(pimpl->view.getViewedComponent()->getWidth() + pimpl->view.getVerticalScrollBar().getWidth(),
-        jmin(pimpl->view.getViewedComponent()->getHeight(), 400));
+    setSize(pimpl->GetView()->getViewedComponent()->getWidth() + pimpl->GetView()->getVerticalScrollBar().getWidth(),
+        jmin(pimpl->GetView()->getViewedComponent()->getHeight(), 400));
 
     setOpaque(false);
 }
