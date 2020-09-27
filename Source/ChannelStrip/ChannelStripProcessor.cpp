@@ -11,11 +11,11 @@
 #include "ChannelStripProcessor.h"
 #include "ChannelStripProcessorEditor.h"
 
-ProcessorBase::ProcessorBase()
+ChannelStripProcessorBase::ChannelStripProcessorBase()
 {
 }
 
-void ProcessorBase::prepareToPlay(double sampleRate, int samplesPerBlock)
+void ChannelStripProcessorBase::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	m_sampleRate = sampleRate;
 	m_samplesPerBlock = samplesPerBlock;
@@ -23,66 +23,66 @@ void ProcessorBase::prepareToPlay(double sampleRate, int samplesPerBlock)
 	updateParameterValues();
 }
 
-void ProcessorBase::releaseResources() 
+void ChannelStripProcessorBase::releaseResources() 
 {
 }
 
-void ProcessorBase::processBlock(AudioSampleBuffer&, MidiBuffer&) 
+void ChannelStripProcessorBase::processBlock(AudioSampleBuffer&, MidiBuffer&) 
 {
 }
 
-const String ProcessorBase::getName() const 
+const String ChannelStripProcessorBase::getName() const 
 {
 	return {}; 
 }
 
-bool ProcessorBase::acceptsMidi() const 
+bool ChannelStripProcessorBase::acceptsMidi() const 
 {
 	return false; 
 }
 
-bool ProcessorBase::producesMidi() const 
+bool ChannelStripProcessorBase::producesMidi() const 
 {
 	return false; 
 }
 
-double ProcessorBase::getTailLengthSeconds() const 
+double ChannelStripProcessorBase::getTailLengthSeconds() const 
 {
 	return 0; 
 }
 
-int ProcessorBase::getNumPrograms() 
+int ChannelStripProcessorBase::getNumPrograms() 
 { 
 	return 0; 
 }
 
-int ProcessorBase::getCurrentProgram() 
+int ChannelStripProcessorBase::getCurrentProgram() 
 { 
 	return 0; 
 }
 
-void ProcessorBase::setCurrentProgram(int) 
+void ChannelStripProcessorBase::setCurrentProgram(int) 
 {
 }
 
-const String ProcessorBase::getProgramName(int) 
+const String ChannelStripProcessorBase::getProgramName(int) 
 { 
 	return {}; 
 }
 
-void ProcessorBase::changeProgramName(int, const String&) 
+void ChannelStripProcessorBase::changeProgramName(int, const String&) 
 {
 }
 
-void ProcessorBase::getStateInformation(MemoryBlock&) 
+void ChannelStripProcessorBase::getStateInformation(MemoryBlock&) 
 {
 }
 
-void ProcessorBase::setStateInformation(const void*, int)
+void ChannelStripProcessorBase::setStateInformation(const void*, int)
 {
 }
 
-void ProcessorBase::initParameters()
+void ChannelStripProcessorBase::initParameters()
 {
 	for (auto param : getProcessorParams())
 	{
@@ -98,13 +98,13 @@ void ProcessorBase::initParameters()
 	}
 }
 
-void ProcessorBase::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
+void ChannelStripProcessorBase::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
 {
 	ignoreUnused(parameterIndex);
 	ignoreUnused(gestureIsStarting);
 }
 
-AudioProcessorEditor* ProcessorBase::createEditor()
+AudioProcessorEditor* ChannelStripProcessorBase::createEditor()
 {
 	auto editor = std::make_unique<ChannelStripProcessorEditor>(*this);
 	editor->setSize(50, 60);
@@ -112,12 +112,12 @@ AudioProcessorEditor* ProcessorBase::createEditor()
 	return editor.release();
 }
 
-bool ProcessorBase::hasEditor() const
+bool ChannelStripProcessorBase::hasEditor() const
 {
 	return true;
 }
 
-float ProcessorBase::getMappedValue(AudioProcessorParameter* param)
+float ChannelStripProcessorBase::getMappedValue(AudioProcessorParameter* param)
 {
 	auto floatParam = dynamic_cast<AudioParameterFloat*>(param);
 	if (floatParam)
@@ -132,7 +132,7 @@ float ProcessorBase::getMappedValue(AudioProcessorParameter* param)
 		return 0.0f;
 }
 
-float ProcessorBase::getNormalizedValue(AudioProcessorParameter* param)
+float ChannelStripProcessorBase::getNormalizedValue(AudioProcessorParameter* param)
 {
 	auto floatParam = dynamic_cast<AudioParameterFloat*>(param);
 	if (floatParam)
@@ -149,14 +149,14 @@ float ProcessorBase::getNormalizedValue(AudioProcessorParameter* param)
 
 
 GainProcessor::GainProcessor()
-	: ProcessorBase()
+	: ChannelStripProcessorBase()
 {
 	initParameters();
 }
 
-std::vector<ProcessorBase::ProcessorParam> GainProcessor::getProcessorParams()
+std::vector<ChannelStripProcessorBase::ProcessorParam> GainProcessor::getProcessorParams()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"gain", "Gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f} };
+	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ {"gain", "Gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f} };
 }
 
 void GainProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -196,14 +196,14 @@ const String GainProcessor::getName() const
 
 
 HPFilterProcessor::HPFilterProcessor()
-	: ProcessorBase()
+	: ChannelStripProcessorBase()
 {
 	initParameters();
 }
 
-std::vector<ProcessorBase::ProcessorParam> HPFilterProcessor::getProcessorParams()
+std::vector<ChannelStripProcessorBase::ProcessorParam> HPFilterProcessor::getProcessorParams()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"hpff", "Highpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20.0f} };
+	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ {"hpff", "Highpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20.0f} };
 }
 
 void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -243,14 +243,14 @@ const String HPFilterProcessor::getName() const
 
 
 LPFilterProcessor::LPFilterProcessor()
-	: ProcessorBase()
+	: ChannelStripProcessorBase()
 {
 	initParameters();
 }
 
-std::vector<ProcessorBase::ProcessorParam> LPFilterProcessor::getProcessorParams()
+std::vector<ChannelStripProcessorBase::ProcessorParam> LPFilterProcessor::getProcessorParams()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"lpff", "Lowpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20000.0f} };
+	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ {"lpff", "Lowpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20000.0f} };
 }
 
 void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)

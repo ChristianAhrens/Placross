@@ -13,7 +13,7 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-class ProcessorBase  : public AudioProcessor, public AudioProcessorParameter::Listener
+class ChannelStripProcessorBase  : public AudioProcessor, public AudioProcessorParameter::Listener
 {
 public:
     struct ProcessorParam
@@ -37,11 +37,11 @@ public:
         float skewV;    // value skew
         float defaultV; // default value
     };
-    virtual std::vector<ProcessorBase::ProcessorParam> getProcessorParams() = 0;
+    virtual std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() = 0;
 
 public:
     //==============================================================================
-    ProcessorBase();
+    ChannelStripProcessorBase();
 
     //==============================================================================
     void prepareToPlay(double, int) override;
@@ -88,11 +88,11 @@ protected:
 
 private:
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ProcessorBase)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelStripProcessorBase)
 };
 
 //==============================================================================
-class GainProcessor  : public ProcessorBase
+class GainProcessor  : public ChannelStripProcessorBase
 {
 public:
     GainProcessor();
@@ -107,14 +107,14 @@ public:
 
     const String getName() const override;
 
-    std::vector<ProcessorBase::ProcessorParam> getProcessorParams() override;
+    std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
     dsp::Gain<float> m_gain;
 };
 
 //==============================================================================
-class HPFilterProcessor  : public ProcessorBase
+class HPFilterProcessor  : public ChannelStripProcessorBase
 {
 public:
     HPFilterProcessor();
@@ -129,14 +129,14 @@ public:
 
     const String getName() const override;
 
-    std::vector<ProcessorBase::ProcessorParam> getProcessorParams() override;
+    std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
 };
 
 //==============================================================================
-class LPFilterProcessor : public ProcessorBase
+class LPFilterProcessor : public ChannelStripProcessorBase
 {
 public:
     LPFilterProcessor();
@@ -151,7 +151,7 @@ public:
 
     const String getName() const override;
 
-    std::vector<ProcessorBase::ProcessorParam> getProcessorParams() override;
+    std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
     dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
