@@ -132,7 +132,8 @@ public:
     std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
+    dsp::StateVariableTPTFilter<float> m_filter;
+    dsp::Gain<float> m_gain;
 };
 
 //==============================================================================
@@ -154,5 +155,6 @@ public:
     std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
+    dsp::StateVariableTPTFilter<float> m_filter;
+    dsp::Gain<float> m_gain;
 };

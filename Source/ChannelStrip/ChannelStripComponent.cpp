@@ -130,14 +130,45 @@ void ChannelStripComponent::connectAudioNodes()
 {
 	ReferenceCountedArray<Node> activeNodes = m_mainProcessor->getNodes();
 
-	jassert(activeNodes.getFirst() == m_audioInputNode);
-	jassert(activeNodes.getLast() == m_audioOutputNode);
-
-	for (int i = 0; i < activeNodes.size() - 1; ++i)
+	jassert(activeNodes.getFirst() == m_audioInputNode);	// We require an input
+	jassert(activeNodes.getLast() == m_audioOutputNode);	// as well as an output
+	jassert(activeNodes.size() == 5);						// and rely on having three nodes inbetween (HP, LP, Gain)
+	if (activeNodes.size() == 5)
 	{
+		auto Inputnode = activeNodes.getUnchecked(0);
+		auto HPFnode = activeNodes.getUnchecked(1);
+		auto LPFnode = activeNodes.getUnchecked(2);
+		auto Gainnode = activeNodes.getUnchecked(3);
+		auto Outputnode = activeNodes.getUnchecked(4);
+
 		for (int channel = 0; channel < m_mainProcessor->getMainBusNumInputChannels(); ++channel)
-			m_mainProcessor->addConnection({ { activeNodes.getUnchecked(i)->nodeID,      channel },
-											{ activeNodes.getUnchecked(i + 1)->nodeID,  channel } });
+		{
+			// feed the input to both hp and lp
+			m_mainProcessor->addConnection({	{ Inputnode->nodeID,    channel },
+												{ HPFnode->nodeID,		channel } });
+			m_mainProcessor->addConnection({	{ Inputnode->nodeID,    channel },
+												{ LPFnode->nodeID,		channel } });
+
+			// feed both hp and lp to gain (sum up)
+			m_mainProcessor->addConnection({	{ HPFnode->nodeID,		channel },
+												{ Gainnode->nodeID,		channel } });
+			m_mainProcessor->addConnection({	{ LPFnode->nodeID,		channel },
+												{ Gainnode->nodeID,		channel } });
+
+			// feed gain to output
+			m_mainProcessor->addConnection({	{ Gainnode->nodeID,		channel },
+												{ Outputnode->nodeID,	channel } });
+		}
+	}
+	else
+	{
+		// if we do not have the expected 5 nodes, setup a dummy chain of nodes to at least have something
+		for (int i = 0; i < activeNodes.size() - 1; ++i)
+		{
+			for (int channel = 0; channel < m_mainProcessor->getMainBusNumInputChannels(); ++channel)
+				m_mainProcessor->addConnection({ { activeNodes.getUnchecked(i)->nodeID,      channel },
+												{ activeNodes.getUnchecked(i + 1)->nodeID,  channel } });
+		}
 	}
 }
 

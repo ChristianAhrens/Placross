@@ -156,7 +156,7 @@ GainProcessor::GainProcessor()
 
 std::vector<ChannelStripProcessorBase::ProcessorParam> GainProcessor::getProcessorParams()
 {
-	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ {"gain", "Gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f} };
+	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ { "gain", "Gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f } };
 }
 
 void GainProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -175,7 +175,6 @@ void GainProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
 	if (parameterIndex == m_IdToIdxMap.at("gain"))
 	{
-		//DBG(String(__FUNCTION__) + " gain " + String(newValue));
 		m_gain.setGainLinear(newValue);
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
@@ -199,11 +198,13 @@ HPFilterProcessor::HPFilterProcessor()
 	: ChannelStripProcessorBase()
 {
 	initParameters();
+
+	m_filter.setType(dsp::StateVariableTPTFilterType::highpass);
 }
 
 std::vector<ChannelStripProcessorBase::ProcessorParam> HPFilterProcessor::getProcessorParams()
 {
-	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ {"hpff", "Highpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20.0f} };
+	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ { "hpff", "Highpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20.0f }, { "hpfg", "Highpass gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f } };
 }
 
 void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -211,28 +212,38 @@ void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
 	m_filter.process(context);
+	m_gain.process(context);
 }
 
 void HPFilterProcessor::reset()
 {
 	m_filter.reset();
+	m_gain.reset();
 }
 
 void HPFilterProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
 	if (parameterIndex == m_IdToIdxMap.at("hpff"))
 	{
-		//DBG(String(__FUNCTION__) + " hpff " + String(newValue));
-		*m_filter.state = *dsp::IIR::Coefficients<float>::makeHighPass(m_sampleRate, newValue);
+		m_filter.setCutoffFrequency(newValue);
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
 		m_filter.prepare(spec);
+	}
+	else if (parameterIndex == m_IdToIdxMap.at("hpfg"))
+	{
+		m_gain.setGainLinear(newValue);
+
+		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
+		m_gain.prepare(spec);
 	}
 }
 
 void HPFilterProcessor::updateParameterValues()
 {
 	auto idx = m_IdToIdxMap.at("hpff");
+	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	idx = m_IdToIdxMap.at("hpfg");
 	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
 }
 
@@ -246,11 +257,13 @@ LPFilterProcessor::LPFilterProcessor()
 	: ChannelStripProcessorBase()
 {
 	initParameters();
+
+	m_filter.setType(dsp::StateVariableTPTFilterType::lowpass);
 }
 
 std::vector<ChannelStripProcessorBase::ProcessorParam> LPFilterProcessor::getProcessorParams()
 {
-	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ {"lpff", "Lowpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20000.0f} };
+	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ { "lpff", "Lowpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20000.0f }, { "lpfg", "Lowpass gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f } };
 }
 
 void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -258,28 +271,38 @@ void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
 	m_filter.process(context);
+	m_gain.process(context);
 }
 
 void LPFilterProcessor::reset()
 {
 	m_filter.reset();
+	m_gain.reset();
 }
 
 void LPFilterProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
 	if (parameterIndex == m_IdToIdxMap.at("lpff"))
 	{
-		//DBG(String(__FUNCTION__) + " lpff " + String(newValue));
-		*m_filter.state = *dsp::IIR::Coefficients<float>::makeLowPass(m_sampleRate, newValue);
+		m_filter.setCutoffFrequency(newValue);
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
 		m_filter.prepare(spec);
+	}
+	else if (parameterIndex == m_IdToIdxMap.at("lpfg"))
+	{
+		m_gain.setGainLinear(newValue);
+
+		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
+		m_gain.prepare(spec);
 	}
 }
 
 void LPFilterProcessor::updateParameterValues()
 {
 	auto idx = m_IdToIdxMap.at("lpff");
+	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	idx = m_IdToIdxMap.at("lpfg");
 	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
 }
 
