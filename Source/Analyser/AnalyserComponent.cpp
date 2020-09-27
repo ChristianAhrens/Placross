@@ -32,26 +32,19 @@ void AnalyserComponent::paint(Graphics& g)
 {
     OverlayToggleComponentBase::paint(g);
 
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll(getLookAndFeel().findColour(ResizableWindow::backgroundColourId));
-
     // calculate what we need for our center circle
-    auto width = getWidth();
-    auto height = getHeight();
     auto outerMargin = 20;
-    auto visuAreaWidth = width - 2 * outerMargin;
-    auto visuAreaHeight = height - 2 * outerMargin;
+    auto visuArea = getOverlayBounds().reduced(outerMargin);
+    auto visuAreaOrigX = visuArea.getX();
+    auto visuAreaOrigY = visuArea.getBottom();
+    auto visuAreaWidth = visuArea.getWidth();
+    auto visuAreaHeight = visuArea.getHeight();
     auto maxPlotFreq = 20000;
     auto minPlotFreq = 10;
-
-    Rectangle<int> visuArea(outerMargin, outerMargin, visuAreaWidth, visuAreaHeight);
 
     // fill our visualization area background
     g.setColour(getLookAndFeel().findColour(ResizableWindow::backgroundColourId).darker());
     g.fillRect(visuArea);
-
-    auto visuAreaOrigX = float(outerMargin);
-    auto visuAreaOrigY = float(outerMargin + visuAreaHeight);
 
     for (int ch = 0; ch < m_plotChannels; ++ch)
     {
@@ -101,7 +94,7 @@ void AnalyserComponent::paint(Graphics& g)
     // draw dBFS
     g.setFont(12.0f);
     g.setColour(Colours::grey);
-    g.drawText(String(m_minDB) + " ... " + String(m_maxDB) + " dBFS", Rectangle<float>(visuAreaOrigX + visuAreaWidth - 100.0f, float(outerMargin), 110.0f, float(outerMargin)), Justification::centred, true);
+    g.drawText(String(m_minDB) + " ... " + String(m_maxDB) + " dBFS", Rectangle<float>(visuAreaOrigX + visuAreaWidth - 100.0f, visuArea.getY(), 110.0f, float(outerMargin)), Justification::centred, true);
 
     g.setColour(getLookAndFeel().findColour(TableHeaderComponent::ColourIds::outlineColourId));
     // draw marker lines 10Hz, 100Hz, 1000Hz, 10000Hz
@@ -129,6 +122,9 @@ void AnalyserComponent::resized()
 
 void AnalyserComponent::audioDeviceIOCallback(const float** inputChannelData, int numInputChannels, float** outputChannelData, int numOutputChannels, int numSamples)
 {
+    ignoreUnused(outputChannelData);
+    ignoreUnused(numOutputChannels);
+
     const ScopedLock sl(m_audioDataLock);
 
     AudioBuffer<float> buffer;
@@ -197,13 +193,13 @@ void AnalyserComponent::handleMessage(const Message& message)
         }
 
         if (numChannels != m_centiSecondBuffer.getNumChannels())
-            m_centiSecondBuffer.setSize(numChannels, m_samplesPerCentiSecond, false, true, true);
+            m_centiSecondBuffer.setSize(numChannels, static_cast<int>(m_samplesPerCentiSecond), false, true, true);
 
         int availableSamples = buffer.getNumSamples();
 
         int readPos = 0;
-        int writePos = m_samplesPerCentiSecond - m_missingSamplesForCentiSecond;
-        while (availableSamples >= m_missingSamplesForCentiSecond)
+        int writePos = static_cast<int>(m_samplesPerCentiSecond) - m_missingSamplesForCentiSecond;
+        while (availableSamples >= static_cast<int>(m_missingSamplesForCentiSecond))
         {
             for (int ch = 0; ch < numChannels; ++ch)
             {
@@ -220,12 +216,12 @@ void AnalyserComponent::handleMessage(const Message& message)
                         {
                             memcpy(m_FFTdata, m_centiSecondBuffer.getReadPointer(ch), missingSamples);
                             m_FFTdataPos += missingSamples;
-                            unprocessedSamples = m_samplesPerCentiSecond - missingSamples;
+                            unprocessedSamples = static_cast<int>(m_samplesPerCentiSecond) - missingSamples;
                         }
                         else
                         {
-                            memcpy(m_FFTdata, m_centiSecondBuffer.getReadPointer(ch), m_samplesPerCentiSecond);
-                            m_FFTdataPos += m_samplesPerCentiSecond;
+                            memcpy(m_FFTdata, m_centiSecondBuffer.getReadPointer(ch), static_cast<int>(m_samplesPerCentiSecond));
+                            m_FFTdataPos += static_cast<int>(m_samplesPerCentiSecond);
                         }
                     }
 
@@ -234,11 +230,11 @@ void AnalyserComponent::handleMessage(const Message& message)
                         m_windowF.multiplyWithWindowingTable(m_FFTdata, fftSize);
                         m_fwdFFT.performFrequencyOnlyForwardTransform(m_FFTdata);
 
-                        m_minFreq = m_sampleRate / m_freqBands;
-                        m_maxFreq = m_sampleRate / 2;
-                        m_freqRes = (m_maxFreq - m_minFreq) / m_freqBands;
+                        m_minFreq = static_cast<float>(m_sampleRate / m_freqBands);
+                        m_maxFreq = static_cast<float>(m_sampleRate / 2);
+                        m_freqRes = static_cast<int>((m_maxFreq - m_minFreq) / m_freqBands);
 
-                        int spectrumStepWidth = 0.5f * (fftSize / m_freqBands);
+                        int spectrumStepWidth = (fftSize / m_freqBands) / 2;
                         int spectrumPos = 0;
                         for (int freq = 0; freq < m_freqBands && spectrumPos < fftSize; ++freq)
                         {
@@ -264,7 +260,7 @@ void AnalyserComponent::handleMessage(const Message& message)
 
                     if (unprocessedSamples != 0)
                     {
-                        memcpy(m_FFTdata, m_centiSecondBuffer.getReadPointer(ch, m_samplesPerCentiSecond - unprocessedSamples), unprocessedSamples);
+                        memcpy(m_FFTdata, m_centiSecondBuffer.getReadPointer(ch, static_cast<int>(m_samplesPerCentiSecond) - unprocessedSamples), unprocessedSamples);
                         m_FFTdataPos += unprocessedSamples;
                     }
                 }
@@ -273,9 +269,9 @@ void AnalyserComponent::handleMessage(const Message& message)
             readPos += m_missingSamplesForCentiSecond;
             availableSamples -= m_missingSamplesForCentiSecond;
 
-            m_missingSamplesForCentiSecond = m_samplesPerCentiSecond;
+            m_missingSamplesForCentiSecond = static_cast<int>(m_samplesPerCentiSecond);
 
-            writePos = m_samplesPerCentiSecond - m_missingSamplesForCentiSecond;
+            writePos = static_cast<int>(m_samplesPerCentiSecond) - m_missingSamplesForCentiSecond;
 
             if (availableSamples <= 0)
                 break;
@@ -304,11 +300,7 @@ void AnalyserComponent::changeOverlayState()
 
 void AnalyserComponent::toggleMinimizedMaximizedElementVisibility(bool maximized)
 {
-    //m_sumButton->setVisible(!maximized);
-    //
-    //for (auto const& nodeButtonRow : m_nodeButtons)
-    //    for (auto const& button : nodeButtonRow)
-    //        button->setVisible(maximized);
+    ignoreUnused(maximized);
 }
 
 void AnalyserComponent::timerCallback()
