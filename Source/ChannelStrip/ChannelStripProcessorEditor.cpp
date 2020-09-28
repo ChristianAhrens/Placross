@@ -10,6 +10,8 @@
 
 #include "ChannelStripProcessorEditor.h"
 
+#include "ChannelStripProcessor.h"
+
 #include <juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp>
 
 class ParameterListener : private AudioProcessorParameter::Listener,
@@ -417,22 +419,41 @@ private:
 };
 
 //==============================================================================
-class ParameterDisplayComponent : public Component
+class ChannelStripParameterDisplayComponent : public Component
 {
 public:
-    ParameterDisplayComponent(AudioProcessor& processor, AudioProcessorParameter& param)
+    ChannelStripParameterDisplayComponent(ChannelStripProcessorBase& processor, AudioProcessorParameter& param)
         : m_parameter(param)
     {
         m_parameterName.setText(m_parameter.getName(128), dontSendNotification);
         m_parameterName.setJustificationType(Justification::left);
         addAndMakeVisible(m_parameterName);
 
-        addAndMakeVisible(*(m_parameterComp = createParameterComp(processor)));
-        
-        int maxWidth = jmax(400, m_parameterComp->getWidth());
-        int height = jmax(20, 20 + m_parameterComp->getHeight());
+        m_parameterComp = createParameterComp(processor);
+        if (m_parameterComp)
+        {
+            addAndMakeVisible(*m_parameterComp);
 
-        setSize(maxWidth, height);
+            int maxWidth = jmax(400, m_parameterComp->getWidth());
+            int height = jmax(20, 20 + m_parameterComp->getHeight());
+
+            setSize(maxWidth, height);
+        }
+    }
+
+    ChannelStripParameterDisplayComponent(ChannelStripProcessorBase& processor)
+        : m_parameter(*processor.getParameters()[0])
+    {
+        m_parameterComp = createParameterComp(processor);
+        if (m_parameterComp)
+        {
+            addAndMakeVisible(*m_parameterComp);
+
+            int maxWidth = jmax(400, m_parameterComp->getWidth());
+            int height = jmax(20, 20 + m_parameterComp->getHeight());
+
+            setSize(maxWidth, height);
+        }
     }
 
     void resized() override
@@ -459,8 +480,22 @@ private:
     Label m_parameterName;
     std::unique_ptr<Component> m_parameterComp;
 
-    std::unique_ptr<Component> createParameterComp(AudioProcessor& processor) const
+    std::unique_ptr<Component> createParameterComp(ChannelStripProcessorBase& processor) const
     {
+        // create a custom highpass filter parameter component if the processor is one of our own highpass type
+        if (processor.getType() == ChannelStripProcessorBase::CSPT_HighPass)
+        {
+            // return std::make_unique<HighPassParameterComponent>(processor);
+            return nullptr;
+        }
+
+        // create a custom lowpass filter parameter component if the processor is one of our own lowpass type
+        if (processor.getType() == ChannelStripProcessorBase::CSPT_LowPass)
+        {
+            // return std::make_unique<LowPassParameterComponent>(processor);
+            return nullptr;
+        }
+
         // The AU, AUv3 and VST (only via a .vstxml file) SDKs support
         // marking a parameter as boolean. If you want consistency across
         // all  formats then it might be best to use a
@@ -483,18 +518,28 @@ private:
         return std::make_unique<SliderParameterComponent>(processor, m_parameter);
     }
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParameterDisplayComponent)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChannelStripParameterDisplayComponent)
 };
 
 //==============================================================================
-class ParametersPanel : public Component
+class ChannelStripParametersPanel : public Component
 {
 public:
-    ParametersPanel(AudioProcessor& processor, const Array<AudioProcessorParameter*>& parameters)
+    ChannelStripParametersPanel(ChannelStripProcessorBase& processor)
     {
-        for (auto* param : parameters)
-            if (param->isAutomatable())
-                addAndMakeVisible(m_paramComponents.add(new ParameterDisplayComponent(processor, *param)));
+        switch (processor.getType())
+        {
+        case ChannelStripProcessorBase::CSPT_HighPass:
+        case ChannelStripProcessorBase::CSPT_LowPass:
+            addAndMakeVisible(m_paramComponents.add(new ChannelStripParameterDisplayComponent(processor)));
+            break;
+        case ChannelStripProcessorBase::CSPT_Gain:
+        case ChannelStripProcessorBase::CSPT_Invalid:
+            for (auto* param : processor.getParameters())
+                if (param->isAutomatable())
+                    addAndMakeVisible(m_paramComponents.add(new ChannelStripParameterDisplayComponent(processor, *param)));
+            break;
+        }
 
         int maxWidth = 400;
         int height = 0;
@@ -508,7 +553,7 @@ public:
         setSize(maxWidth, height);
     }
 
-    ~ParametersPanel() override
+    ~ChannelStripParametersPanel() override
     {
         m_paramComponents.clear();
     }
@@ -539,9 +584,9 @@ public:
     }
 
 private:
-    OwnedArray<ParameterDisplayComponent> m_paramComponents;
+    OwnedArray<ChannelStripParameterDisplayComponent> m_paramComponents;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParametersPanel)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChannelStripParametersPanel)
 };
 
 //==============================================================================
@@ -549,14 +594,12 @@ struct ChannelStripProcessorEditor::Pimpl
 {
     Pimpl(ChannelStripProcessorEditor& parent) : m_owner(parent)
     {
-        auto* p = parent.getAudioProcessor();
+        auto* p = dynamic_cast<ChannelStripProcessorBase*>(parent.getAudioProcessor());
         jassert(p != nullptr);
-
-        m_legacyParameters.update(*p, false);
 
         m_owner.setOpaque(true);
 
-        m_view.setViewedComponent(new ParametersPanel(*p, m_legacyParameters.params));
+        m_view.setViewedComponent(new ChannelStripParametersPanel(*p));
         m_owner.addAndMakeVisible(m_view);
 
         m_view.setScrollBarsShown(true, true);
@@ -576,7 +619,7 @@ struct ChannelStripProcessorEditor::Pimpl
 
     void setChannelColour(const Colour& colour)
     {
-        auto ppanel = dynamic_cast<ParametersPanel*>(m_view.getViewedComponent());
+        auto ppanel = dynamic_cast<ChannelStripParametersPanel*>(m_view.getViewedComponent());
         if (ppanel)
             ppanel->setChannelColour(colour);
     }
@@ -596,7 +639,7 @@ private:
 };
 
 //==============================================================================
-ChannelStripProcessorEditor::ChannelStripProcessorEditor(AudioProcessor& p)
+ChannelStripProcessorEditor::ChannelStripProcessorEditor(ChannelStripProcessorBase& p)
     : AudioProcessorEditor(p), pimpl(new Pimpl(*this))
 {
     setSize(pimpl->GetView()->getViewedComponent()->getWidth() + pimpl->GetView()->getVerticalScrollBar().getWidth(),

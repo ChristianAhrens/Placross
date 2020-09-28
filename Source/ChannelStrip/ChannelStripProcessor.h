@@ -16,6 +16,14 @@
 class ChannelStripProcessorBase  : public AudioProcessor, public AudioProcessorParameter::Listener
 {
 public:
+    enum ChannelStripProcessorType
+    {
+        CSPT_LowPass,
+        CSPT_HighPass,
+        CSPT_Gain,
+        CSPT_Invalid
+    };
+
     struct ProcessorParam
     {
         ProcessorParam(String i, String n, float min, float max, float interval, float skew, float def)
@@ -42,6 +50,8 @@ public:
 public:
     //==============================================================================
     ChannelStripProcessorBase();
+
+    virtual ChannelStripProcessorType getType() = 0;
 
     //==============================================================================
     void prepareToPlay(double, int) override;
@@ -96,6 +106,8 @@ class GainProcessor  : public ChannelStripProcessorBase
 {
 public:
     GainProcessor();
+    
+    ChannelStripProcessorType getType();
 
     //==============================================================================
     void processBlock (AudioSampleBuffer& buffer, MidiBuffer&) override;
@@ -119,6 +131,8 @@ class HPFilterProcessor  : public ChannelStripProcessorBase
 public:
     HPFilterProcessor();
 
+    ChannelStripProcessorType getType();
+
     //==============================================================================
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;
     void reset() override;
@@ -141,6 +155,8 @@ class LPFilterProcessor : public ChannelStripProcessorBase
 {
 public:
     LPFilterProcessor();
+
+    ChannelStripProcessorType getType();
 
     //==============================================================================
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;

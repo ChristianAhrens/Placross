@@ -154,6 +154,11 @@ GainProcessor::GainProcessor()
 	initParameters();
 }
 
+ChannelStripProcessorBase::ChannelStripProcessorType GainProcessor::getType()
+{
+	return ChannelStripProcessorBase::CSPT_Gain;
+}
+
 std::vector<ChannelStripProcessorBase::ProcessorParam> GainProcessor::getProcessorParams()
 {
 	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ { "gain", "Gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f } };
@@ -200,6 +205,11 @@ HPFilterProcessor::HPFilterProcessor()
 	initParameters();
 
 	m_filter.setType(dsp::StateVariableTPTFilterType::highpass);
+}
+
+ChannelStripProcessorBase::ChannelStripProcessorType HPFilterProcessor::getType()
+{
+	return ChannelStripProcessorBase::CSPT_HighPass;
 }
 
 std::vector<ChannelStripProcessorBase::ProcessorParam> HPFilterProcessor::getProcessorParams()
@@ -259,6 +269,11 @@ LPFilterProcessor::LPFilterProcessor()
 	initParameters();
 
 	m_filter.setType(dsp::StateVariableTPTFilterType::lowpass);
+}
+
+ChannelStripProcessorBase::ChannelStripProcessorType LPFilterProcessor::getType()
+{
+	return ChannelStripProcessorBase::CSPT_LowPass;
 }
 
 std::vector<ChannelStripProcessorBase::ProcessorParam> LPFilterProcessor::getProcessorParams()
