@@ -53,6 +53,8 @@ public:
 
     virtual ChannelStripProcessorType getType() = 0;
 
+    virtual float getMagnitudeResponse(float freq) = 0;
+
     //==============================================================================
     void prepareToPlay(double, int) override;
     void releaseResources() override;
@@ -107,7 +109,8 @@ class GainProcessor  : public ChannelStripProcessorBase
 public:
     GainProcessor();
     
-    ChannelStripProcessorType getType();
+    ChannelStripProcessorType getType() override;
+    float getMagnitudeResponse(float freq) override;
 
     //==============================================================================
     void processBlock (AudioSampleBuffer& buffer, MidiBuffer&) override;
@@ -131,7 +134,8 @@ class HPFilterProcessor  : public ChannelStripProcessorBase
 public:
     HPFilterProcessor();
 
-    ChannelStripProcessorType getType();
+    ChannelStripProcessorType getType() override;
+    float getMagnitudeResponse(float freq) override;
 
     //==============================================================================
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;
@@ -156,7 +160,8 @@ class LPFilterProcessor : public ChannelStripProcessorBase
 public:
     LPFilterProcessor();
 
-    ChannelStripProcessorType getType();
+    ChannelStripProcessorType getType() override;
+    float getMagnitudeResponse(float freq) override;
 
     //==============================================================================
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;

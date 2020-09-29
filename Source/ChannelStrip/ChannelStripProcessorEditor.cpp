@@ -14,42 +14,60 @@
 
 #include <juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp>
 
-class ParameterListener : private AudioProcessorParameter::Listener,
+class ChannelStripParameterListener : private AudioProcessorParameter::Listener,
     private AudioProcessorListener,
     private Timer
 {
 public:
-    ParameterListener(AudioProcessor& proc, AudioProcessorParameter& param)
-        : processor(proc), parameter(param), isLegacyParam(juce::LegacyAudioParameter::isLegacy(&param))
+    ChannelStripParameterListener(AudioProcessor& proc, const Array<AudioProcessorParameter*>& params, int parameterIndex = -1)
+        : m_processor(proc), m_parameters(params), m_isLegacyParam(params.isEmpty() ? false : juce::LegacyAudioParameter::isLegacy(params[0])), m_singleParameterIndex(parameterIndex)
     {
-        if (isLegacyParam)
-            processor.addListener(this);
+        if (m_isLegacyParam)
+            m_processor.addListener(this);
         else
-            parameter.addListener(this);
+        {
+            for (auto parameter : m_parameters)
+                parameter->addListener(this);
+        }
 
         startTimer(100);
     }
 
-    ~ParameterListener() override
+    ~ChannelStripParameterListener() override
     {
-        if (isLegacyParam)
-            processor.removeListener(this);
+        if (m_isLegacyParam)
+            m_processor.removeListener(this);
         else
-            parameter.removeListener(this);
+        {
+            for (auto parameter : m_parameters)
+                parameter->removeListener(this);
+        }
     }
 
-    AudioProcessorParameter& getParameter() const noexcept
+    const Array<AudioProcessorParameter*>& getParameters() const noexcept
     {
-        return parameter;
+        return m_parameters;
     }
 
-    virtual void handleNewParameterValue() = 0;
+    AudioProcessorParameter& getParameter(int parameterIndex = -1) const noexcept
+    {
+        if (parameterIndex > -1 && m_parameters.size() > parameterIndex)
+            return *m_parameters.getUnchecked(parameterIndex);
+        else if (m_singleParameterIndex > -1 && m_parameters.size() > m_singleParameterIndex)
+            return *m_parameters.getUnchecked(m_singleParameterIndex);
+        else if (!m_parameters.isEmpty())
+            return *m_parameters.getFirst();
+        else
+            jassertfalse;
+    }
+
+    virtual void handleNewParameterValue(int parameterIndex) = 0;
 
 private:
     //==============================================================================
     void parameterValueChanged(int, float) override
     {
-        parameterValueHasChanged = 1;
+        m_parameterValueHasChanged = 1;
     }
 
     void parameterGestureChanged(int, bool) override {}
@@ -57,8 +75,11 @@ private:
     //==============================================================================
     void audioProcessorParameterChanged(AudioProcessor*, int index, float) override
     {
-        if (index == parameter.getParameterIndex())
-            parameterValueHasChanged = 1;
+        for (auto parameter : m_parameters)
+        {
+            if (index == parameter->getParameterIndex())
+                m_parameterValueHasChanged = 1;
+        }
     }
 
     void audioProcessorChanged(AudioProcessor*) override {}
@@ -66,9 +87,9 @@ private:
     //==============================================================================
     void timerCallback() override
     {
-        if (parameterValueHasChanged.compareAndSetBool(0, 1))
+        if (m_parameterValueHasChanged.compareAndSetBool(0, 1))
         {
-            handleNewParameterValue();
+            handleNewParameterValue(m_singleParameterIndex);
             startTimerHz(50);
         }
         else
@@ -77,24 +98,25 @@ private:
         }
     }
 
-    AudioProcessor& processor;
-    AudioProcessorParameter& parameter;
-    Atomic<int> parameterValueHasChanged{ 0 };
-    const bool isLegacyParam;
+    AudioProcessor& m_processor;
+    const Array<AudioProcessorParameter*>& m_parameters;
+    const int m_singleParameterIndex;
+    Atomic<int> m_parameterValueHasChanged{ 0 };
+    const bool m_isLegacyParam;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ParameterListener)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChannelStripParameterListener)
 };
 
 //==============================================================================
 class BooleanParameterComponent final : public Component,
-    private ParameterListener
+    private ChannelStripParameterListener
 {
 public:
-    BooleanParameterComponent(AudioProcessor& proc, AudioProcessorParameter& param)
-        : ParameterListener(proc, param)
+    BooleanParameterComponent(AudioProcessor& proc, const Array<AudioProcessorParameter*>& params, int parameterIndex = -1)
+        : ChannelStripParameterListener(proc, params, parameterIndex)
     {
         // Set the initial value.
-        handleNewParameterValue();
+        handleNewParameterValue(parameterIndex);
 
         button.onClick = [this] { buttonClicked(); };
 
@@ -116,8 +138,10 @@ public:
     }
 
 private:
-    void handleNewParameterValue() override
+    void handleNewParameterValue(int parameterIndex) override
     {
+        ignoreUnused(parameterIndex);
+
         button.setToggleState(isParameterOn(), dontSendNotification);
     }
 
@@ -140,11 +164,11 @@ private:
 
 //==============================================================================
 class SwitchParameterComponent final : public Component,
-    private ParameterListener
+    private ChannelStripParameterListener
 {
 public:
-    SwitchParameterComponent(AudioProcessor& proc, AudioProcessorParameter& param)
-        : ParameterListener(proc, param)
+    SwitchParameterComponent(AudioProcessor& proc, const Array<AudioProcessorParameter*>& params, int parameterIndex = -1)
+        : ChannelStripParameterListener(proc, params, parameterIndex)
     {
         for (auto& button : buttons)
         {
@@ -160,7 +184,7 @@ public:
 
         // Set the initial value.
         buttons[0].setToggleState(true, dontSendNotification);
-        handleNewParameterValue();
+        handleNewParameterValue(parameterIndex);
 
         buttons[1].onStateChange = [this] { rightButtonChanged(); };
 
@@ -185,8 +209,10 @@ public:
     }
 
 private:
-    void handleNewParameterValue() override
+    void handleNewParameterValue(int parameterIndex) override
     {
+        ignoreUnused(parameterIndex);
+
         bool newState = isParameterOn();
 
         if (buttons[1].getToggleState() != newState)
@@ -248,17 +274,17 @@ private:
 
 //==============================================================================
 class ChoiceParameterComponent final : public Component,
-    private ParameterListener
+    private ChannelStripParameterListener
 {
 public:
-    ChoiceParameterComponent(AudioProcessor& proc, AudioProcessorParameter& param)
-        : ParameterListener(proc, param),
+    ChoiceParameterComponent(AudioProcessor& proc, const Array<AudioProcessorParameter*>& params, int parameterIndex = -1)
+        : ChannelStripParameterListener(proc, params, parameterIndex),
         parameterValues(getParameter().getAllValueStrings())
     {
         box.addItemList(parameterValues, 1);
 
         // Set the initial value.
-        handleNewParameterValue();
+        handleNewParameterValue(parameterIndex);
 
         box.onChange = [this] { boxChanged(); };
         addAndMakeVisible(box);
@@ -279,15 +305,15 @@ public:
     }
 
 private:
-    void handleNewParameterValue() override
+    void handleNewParameterValue(int parameterIndex) override
     {
-        auto index = parameterValues.indexOf(getParameter().getCurrentValueAsText());
+        auto index = parameterValues.indexOf(getParameter(parameterIndex).getCurrentValueAsText());
 
         if (index < 0)
         {
             // The parameter is producing some unexpected text, so we'll do
             // some linear interpolation.
-            index = roundToInt(getParameter().getValue() * (parameterValues.size() - 1));
+            index = roundToInt(getParameter(parameterIndex).getValue() * (parameterValues.size() - 1));
         }
 
         box.setSelectedItemIndex(index);
@@ -315,18 +341,31 @@ private:
 };
 
 //==============================================================================
-class SliderParameterComponent final : public Component,
-    private ParameterListener
+class CustomColouredParameter
 {
 public:
-    SliderParameterComponent(AudioProcessor& proc, AudioProcessorParameter& param)
-        : ParameterListener(proc, param)
+    CustomColouredParameter() {};
+
+    virtual void setCustomColour(const Colour& colour) = 0;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CustomColouredParameter)
+};
+
+//==============================================================================
+class SliderParameterComponent final :
+    public Component,
+    private ChannelStripParameterListener, 
+    public CustomColouredParameter
+{
+public:
+    SliderParameterComponent(AudioProcessor& proc, const Array<AudioProcessorParameter*>& params, int parameterIndex = -1)
+        : ChannelStripParameterListener(proc, params, parameterIndex)
     {
         auto rangeMin = 0.0f;
         auto rangeMax = 1.0f;
         auto defaultVal = 1.0f;
         auto rangeStep = 1.0f;
-        auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter());
+        auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter(parameterIndex));
         if (fParam)
         {
             rangeMin = fParam->getNormalisableRange().getRange().getStart();
@@ -341,7 +380,7 @@ public:
         addAndMakeVisible(m_slider);
 
         // Set the initial value.
-        handleNewParameterValue();
+        handleNewParameterValue(parameterIndex);
 
         m_slider.onValueChange = [this] { sliderValueChanged(); };
         m_slider.onDragStart = [this] { sliderStartedDragging(); };
@@ -360,18 +399,18 @@ public:
         m_slider.setBounds(getLocalBounds());
     }
 
-    void setKnobColour(const Colour& colour)
+    void setCustomColour(const Colour& colour) override
     {
         m_slider.setColour(Slider::ColourIds::thumbColourId, colour);
     }
 
 private:
-    void handleNewParameterValue() override
+    void handleNewParameterValue(int parameterIndex) override
     {
         if (!m_isDragging)
         {
             auto defaultVal = 1.0f;
-            auto param = &getParameter();
+            auto param = &getParameter(parameterIndex);
 
             auto fParam = dynamic_cast<AudioParameterFloat*>(param);
             if (fParam)
@@ -419,31 +458,364 @@ private:
 };
 
 //==============================================================================
+class FilterParameterComponent : public CustomColouredParameter,
+    public Component
+{
+public:
+    FilterParameterComponent(ChannelStripProcessorBase& proc)
+        : m_processor(proc)
+    {
+        m_type = proc.getType();
+
+        m_filterPathThickness = 4.0;
+        m_magResponseColour = Colours::white;
+        m_displayBackgroundColor = Colours::black;
+
+        m_minFrequency = 20.0;
+        m_maxFrequency = 20000.0;
+        m_maxDecibels = 20.0;
+    };
+
+    void setCustomColour(const Colour& colour) override
+    {
+        m_magResponseColour = colour;
+    }
+
+    void paint(Graphics& g) override
+    {
+        float width = (float)getWidth();
+        float height = (float)getHeight();
+
+        g.setColour(m_displayBackgroundColor);
+        g.fillRect(0.0, 0.0, width, height);
+
+        m_magnitudeResponsePath.clear();
+
+        switch (m_type)
+        {
+        case ChannelStripProcessorBase::ChannelStripProcessorType::CSPT_LowPass:
+            drawLowpass();
+            break;
+        case ChannelStripProcessorBase::ChannelStripProcessorType::CSPT_HighPass:
+            drawHighpass();
+            break;
+        }
+
+        //Close the response path drawn
+        m_magnitudeResponsePath.closeSubPath();
+
+        g.setColour(m_magResponseColour);
+        g.strokePath(m_magnitudeResponsePath, PathStrokeType(m_filterPathThickness));
+
+        /*
+           Fill area under/inside path with same colour at a lower alpha / highlight value.
+           Try setting magResponseColour.withAlpha value to different values to get a fill shade you like.
+         */
+        g.setColour(m_magResponseColour.withAlpha((uint8)0x9a));
+        g.fillPath(m_magnitudeResponsePath);
+
+    }
+
+    void resized() override
+    {
+    }
+
+private:
+    void drawLowpass()
+    {
+        float freq = 0.0;
+        float magnitudeDBValue = 0.0;
+
+        /*
+            LowPass so start path on left hand side of component i.e at 0.0f - using 0.0f - (filterPathThickness/2) for asthetic purposes
+            Try commeting out - (filterPathThickness/2) to see the effect. This line hides the highlighted path edge so that the path edge
+            highlight shows only on the top of the magnitude response path.
+         */
+        m_magnitudeResponsePath.startNewSubPath((0.0f - (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
+        magnitudeDBValue = m_processor.getMagnitudeResponse(m_minFrequency);
+        m_magnitudeResponsePath.lineTo((0.0f - (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue));
+
+        for (float xPos = 0.0; xPos < ((float)getWidth() + (m_filterPathThickness / 2)); xPos += (m_filterPathThickness / 2))
+        {
+            //Get the frequency value for the filter's magnitude response calculation
+            freq = xAxisToFrequency(xPos);
+            magnitudeDBValue = m_processor.getMagnitudeResponse(freq);
+            m_magnitudeResponsePath.lineTo(xPos, dbToYAxis(magnitudeDBValue));
+        }
+
+        magnitudeDBValue = m_processor.getMagnitudeResponse(m_maxFrequency);
+        m_magnitudeResponsePath.lineTo(((float)getWidth() + (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue));
+
+        /*
+            Dirty Trick to close the path nicely when cutoff is at max level (this is not apparent for virtual analogue filters that have not been
+            oversampled when cutoff is close to nyquist as the response is pulled to zero). Try commenting this line out and running the plugin at
+            higher sample rate i.e 96khz to see the visual result of the path closing without this.
+         */
+        m_magnitudeResponsePath.lineTo(((float)getWidth() + (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
+
+    }
+
+    void drawHighpass()
+    {
+        float freq = 0.0;
+        float magnitudeDBValue = 0.0;
+
+        //If HighPass start path on right hand side of component i.e at component width.
+        magnitudeDBValue = m_processor.getMagnitudeResponse(m_maxFrequency);
+        m_magnitudeResponsePath.startNewSubPath(((float)getWidth() + (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
+        m_magnitudeResponsePath.lineTo(((float)getWidth() + (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue));
+
+        for (float xPos = ((float)getWidth()); xPos > (m_filterPathThickness / 2); xPos -= (m_filterPathThickness / 2))
+        {
+            //Get the frequency value for the filter's magnitude response calculation
+            freq = xAxisToFrequency(xPos);
+            magnitudeDBValue = m_processor.getMagnitudeResponse(freq);
+            m_magnitudeResponsePath.lineTo(xPos, dbToYAxis(magnitudeDBValue));
+        }
+
+        magnitudeDBValue = m_processor.getMagnitudeResponse(m_minFrequency);
+        m_magnitudeResponsePath.lineTo((0.0f - (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue));
+
+        /*
+            Dirty trick again to close the path nicely when cutoff at min level for High Pass - try cmmenting this line out to se the visual
+            effect on the reponse path closing without it
+         */
+        m_magnitudeResponsePath.lineTo((0.0f - (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
+    }
+
+    float xAxisToFrequency(float xPos)
+    {
+        float width = static_cast<float>(getWidth());
+        //Computes frequency from position on x axis of component. So if the xPos is equal to the component width the value returned will be maxFrequency.
+        float frequency = m_minFrequency * pow((m_maxFrequency / m_minFrequency), (xPos / width));
+        return frequency;
+    }
+
+    float dbToYAxis(float dbGain)
+    {
+        float height = static_cast<float>(getHeight());
+
+        //Scale gain with this value, height of component is divded by maxDB * 2 for -max to +max db response display
+        float scale = -(height) / (m_maxDecibels * 2);
+        float scaledDbGain = dbGain * scale;
+
+        /*
+            Negative db values will result in a negative yposition so add height/2 to result to scale into
+            correct component position for drawing. Test these calculations with a dbGain value equal to maxDecibels and
+            yPostion computed will be equal to the filterResponseDisplay's height as is correct.
+         */
+        float yPosition = scaledDbGain + (height / 2);
+        return yPosition;
+    }
+
+    ChannelStripProcessorBase::ChannelStripProcessorType    m_type = ChannelStripProcessorBase::ChannelStripProcessorType::CSPT_Invalid;
+    ChannelStripProcessorBase&                              m_processor;
+    Path                                                    m_magnitudeResponsePath;
+    float                                                   m_filterPathThickness;
+    Colour                                                  m_magResponseColour;
+    Colour                                                  m_displayBackgroundColor;
+
+    float                                                   m_minFrequency;
+    float                                                   m_maxFrequency;
+    float                                                   m_maxDecibels;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterParameterComponent)
+};
+
+//==============================================================================
+class HighPassParameterComponent final : 
+    private ChannelStripParameterListener, 
+    public FilterParameterComponent
+{
+public:
+    HighPassParameterComponent(ChannelStripProcessorBase& proc)
+        : ChannelStripParameterListener(proc, proc.getParameters()), FilterParameterComponent(proc)
+    {
+        auto rangeMin = 0.0f;
+        auto rangeMax = 1.0f;
+        auto defaultVal = 1.0f;
+        auto rangeStep = 1.0f;
+        auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter());
+        if (fParam)
+        {
+            rangeMin = fParam->getNormalisableRange().getRange().getStart();
+            rangeMax = fParam->getNormalisableRange().getRange().getEnd();
+            defaultVal = *fParam;
+            rangeStep = fParam->getNormalisableRange().interval;
+        }
+
+        //m_slider.setRange(rangeMin, rangeMax, rangeStep);
+        //m_slider.setSkewFactorFromMidPoint(rangeMax / 5);
+        //
+        //addAndMakeVisible(m_slider);
+
+        // Set the initial value.
+        handleNewParameterValue(-1);
+
+        //m_slider.onValueChange = [this] { sliderValueChanged(); };
+        //m_slider.onDragStart = [this] { sliderStartedDragging(); };
+        //m_slider.onDragEnd = [this] { sliderStoppedDragging(); };
+
+        setSize(80, 80);
+    }
+
+private:
+    void handleNewParameterValue(int parameterIndex) override
+    {
+        //if (!m_isDragging)
+        //{
+        //    auto defaultVal = 1.0f;
+        //    auto param = &getParameter(parameterIndex);
+        //
+        //    auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+        //    if (fParam)
+        //        defaultVal = *fParam;
+        //    else
+        //        defaultVal = param->getValue();
+        //
+        //    m_slider.setValue(defaultVal, dontSendNotification);
+        //}
+    }
+
+    void sliderValueChanged()
+    {
+        //auto newVal = (float)m_slider.getValue();
+        //
+        //if (getParameter().getValue() != newVal)
+        //{
+        //    if (!m_isDragging)
+        //        getParameter().beginChangeGesture();
+        //
+        //    getParameter().setValueNotifyingHost((float)m_slider.getValue());
+        //
+        //    if (!m_isDragging)
+        //        getParameter().endChangeGesture();
+        //}
+    }
+
+    void sliderStartedDragging()
+    {
+        m_isDragging = true;
+        getParameter().beginChangeGesture();
+    }
+
+    void sliderStoppedDragging()
+    {
+        m_isDragging = false;
+        getParameter().endChangeGesture();
+    }
+
+private:
+    //Slider m_slider{ Slider::Rotary, Slider::TextEntryBoxPosition::TextBoxBelow };
+    bool m_isDragging = false;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HighPassParameterComponent)
+};
+
+//==============================================================================
+class LowPassParameterComponent final :
+    private ChannelStripParameterListener,
+    public FilterParameterComponent
+{
+public:
+    LowPassParameterComponent(ChannelStripProcessorBase& proc)
+        : ChannelStripParameterListener(proc, proc.getParameters()), FilterParameterComponent(proc)
+    {
+        auto rangeMin = 0.0f;
+        auto rangeMax = 1.0f;
+        auto defaultVal = 1.0f;
+        auto rangeStep = 1.0f;
+        auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter());
+        if (fParam)
+        {
+            rangeMin = fParam->getNormalisableRange().getRange().getStart();
+            rangeMax = fParam->getNormalisableRange().getRange().getEnd();
+            defaultVal = *fParam;
+            rangeStep = fParam->getNormalisableRange().interval;
+        }
+
+        //m_slider.setRange(rangeMin, rangeMax, rangeStep);
+        //m_slider.setSkewFactorFromMidPoint(rangeMax / 5);
+        //
+        //addAndMakeVisible(m_slider);
+
+        // Set the initial value.
+        handleNewParameterValue(-1);
+
+        //m_slider.onValueChange = [this] { sliderValueChanged(); };
+        //m_slider.onDragStart = [this] { sliderStartedDragging(); };
+        //m_slider.onDragEnd = [this] { sliderStoppedDragging(); };
+        
+        setSize(80, 80);
+    }
+
+private:
+    void handleNewParameterValue(int parameterIndex) override
+    {
+        //if (!m_isDragging)
+        //{
+        //    auto defaultVal = 1.0f;
+        //    auto param = &getParameter(parameterIndex);
+        //
+        //    auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+        //    if (fParam)
+        //        defaultVal = *fParam;
+        //    else
+        //        defaultVal = param->getValue();
+        //
+        //    m_slider.setValue(defaultVal, dontSendNotification);
+        //}
+    }
+
+    void sliderValueChanged()
+    {
+        //auto newVal = (float)m_slider.getValue();
+        //
+        //if (getParameter().getValue() != newVal)
+        //{
+        //    if (!m_isDragging)
+        //        getParameter().beginChangeGesture();
+        //
+        //    getParameter().setValueNotifyingHost((float)m_slider.getValue());
+        //
+        //    if (!m_isDragging)
+        //        getParameter().endChangeGesture();
+        //}
+    }
+
+    void sliderStartedDragging()
+    {
+        m_isDragging = true;
+        getParameter().beginChangeGesture();
+    }
+
+    void sliderStoppedDragging()
+    {
+        m_isDragging = false;
+        getParameter().endChangeGesture();
+    }
+
+private:
+    //Slider m_slider{ Slider::Rotary, Slider::TextEntryBoxPosition::TextBoxBelow };
+    bool m_isDragging = false;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LowPassParameterComponent)
+};
+
+//==============================================================================
 class ChannelStripParameterDisplayComponent : public Component
 {
 public:
-    ChannelStripParameterDisplayComponent(ChannelStripProcessorBase& processor, AudioProcessorParameter& param)
-        : m_parameter(param)
+    ChannelStripParameterDisplayComponent(ChannelStripProcessorBase& processor, int parameterIndex = -1)
+        : m_parameters(processor.getParameters()), m_singleParameterIndex(parameterIndex)
     {
-        m_parameterName.setText(m_parameter.getName(128), dontSendNotification);
-        m_parameterName.setJustificationType(Justification::left);
-        addAndMakeVisible(m_parameterName);
-
-        m_parameterComp = createParameterComp(processor);
-        if (m_parameterComp)
+        if (m_singleParameterIndex != -1)
         {
-            addAndMakeVisible(*m_parameterComp);
-
-            int maxWidth = jmax(400, m_parameterComp->getWidth());
-            int height = jmax(20, 20 + m_parameterComp->getHeight());
-
-            setSize(maxWidth, height);
+            m_parameterName.setText(m_parameters.getUnchecked(m_singleParameterIndex)->getName(128), dontSendNotification);
+            m_parameterName.setJustificationType(Justification::left);
+            addAndMakeVisible(m_parameterName);
         }
-    }
 
-    ChannelStripParameterDisplayComponent(ChannelStripProcessorBase& processor)
-        : m_parameter(*processor.getParameters()[0])
-    {
         m_parameterComp = createParameterComp(processor);
         if (m_parameterComp)
         {
@@ -470,13 +842,14 @@ public:
 
     void setChannelColour(const Colour& colour)
     {
-        auto sliderComp = dynamic_cast<SliderParameterComponent*>(m_parameterComp.get());
-        if (sliderComp)
-            sliderComp->setKnobColour(colour);
+        auto customColourComp = dynamic_cast<CustomColouredParameter*>(m_parameterComp.get());
+        if (customColourComp)
+            customColourComp->setCustomColour(colour);
     }
 
 private:
-    AudioProcessorParameter& m_parameter;
+    const Array<AudioProcessorParameter*>& m_parameters;
+    const int m_singleParameterIndex;
     Label m_parameterName;
     std::unique_ptr<Component> m_parameterComp;
 
@@ -485,37 +858,35 @@ private:
         // create a custom highpass filter parameter component if the processor is one of our own highpass type
         if (processor.getType() == ChannelStripProcessorBase::CSPT_HighPass)
         {
-            // return std::make_unique<HighPassParameterComponent>(processor);
-            return nullptr;
+            return std::make_unique<HighPassParameterComponent>(processor);
         }
 
         // create a custom lowpass filter parameter component if the processor is one of our own lowpass type
         if (processor.getType() == ChannelStripProcessorBase::CSPT_LowPass)
         {
-            // return std::make_unique<LowPassParameterComponent>(processor);
-            return nullptr;
+            return std::make_unique<LowPassParameterComponent>(processor);
         }
 
         // The AU, AUv3 and VST (only via a .vstxml file) SDKs support
         // marking a parameter as boolean. If you want consistency across
         // all  formats then it might be best to use a
         // SwitchParameterComponent instead.
-        if (m_parameter.isBoolean())
-            return std::make_unique<BooleanParameterComponent>(processor, m_parameter);
+        if (m_parameters.size() == 1 && m_parameters.getFirst()->isBoolean())
+            return std::make_unique<BooleanParameterComponent>(processor, m_parameters, m_parameters.getFirst()->getParameterIndex());
 
         // Most hosts display any parameter with just two steps as a switch.
-        if (m_parameter.getNumSteps() == 2)
-            return std::make_unique<SwitchParameterComponent>(processor, m_parameter);
+        if (m_parameters.size() == 1 && m_parameters.getFirst()->getNumSteps() == 2)
+            return std::make_unique<SwitchParameterComponent>(processor, m_parameters, m_parameters.getFirst()->getParameterIndex());
 
         // If we have a list of strings to represent the different states a
         // parameter can be in then we should present a dropdown allowing a
         // user to pick one of them.
-        if (!m_parameter.getAllValueStrings().isEmpty()
-            && std::abs(m_parameter.getNumSteps() - m_parameter.getAllValueStrings().size()) <= 1)
-            return std::make_unique<ChoiceParameterComponent>(processor, m_parameter);
+        if (m_parameters.size() == 1 && !m_parameters.getFirst()->getAllValueStrings().isEmpty()
+            && std::abs(m_parameters.getFirst()->getNumSteps() - m_parameters.getFirst()->getAllValueStrings().size()) <= 1)
+            return std::make_unique<ChoiceParameterComponent>(processor, m_parameters, m_parameters.getFirst()->getParameterIndex());
 
         // Everything else can be represented as a slider.
-        return std::make_unique<SliderParameterComponent>(processor, m_parameter);
+        return std::make_unique<SliderParameterComponent>(processor, m_parameters, m_singleParameterIndex);
     }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChannelStripParameterDisplayComponent)
@@ -537,7 +908,7 @@ public:
         case ChannelStripProcessorBase::CSPT_Invalid:
             for (auto* param : processor.getParameters())
                 if (param->isAutomatable())
-                    addAndMakeVisible(m_paramComponents.add(new ChannelStripParameterDisplayComponent(processor, *param)));
+                    addAndMakeVisible(m_paramComponents.add(new ChannelStripParameterDisplayComponent(processor, param->getParameterIndex())));
             break;
         }
 

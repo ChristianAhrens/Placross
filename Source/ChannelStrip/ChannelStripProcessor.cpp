@@ -159,6 +159,11 @@ ChannelStripProcessorBase::ChannelStripProcessorType GainProcessor::getType()
 	return ChannelStripProcessorBase::CSPT_Gain;
 }
 
+float GainProcessor::getMagnitudeResponse(float freq)
+{
+	return 1.0f;
+}
+
 std::vector<ChannelStripProcessorBase::ProcessorParam> GainProcessor::getProcessorParams()
 {
 	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ { "gain", "Gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f } };
@@ -210,6 +215,32 @@ HPFilterProcessor::HPFilterProcessor()
 ChannelStripProcessorBase::ChannelStripProcessorType HPFilterProcessor::getType()
 {
 	return ChannelStripProcessorBase::CSPT_HighPass;
+}
+
+float HPFilterProcessor::getMagnitudeResponse(float freq)
+{
+	float magnitude = 0.0;
+	float T = 1 / m_sampleRate;
+	
+	float wdCutoff = 2 * MathConstants<float>::pi * m_filter.getCutoffFrequency();
+
+	//Calculating pre-warped/analogue cutoff frequency to use in virtual analogue frequeny response calculations
+	float cutOff = (2 / T) * tan(wdCutoff * T / 2);
+
+	//Digital frequency to evaluate
+	float wdEval = 2 * MathConstants<float>::pi * freq;
+	float sValue = (2 / T) * tan(wdEval * T / 2);
+
+	/* This is the digital transfer function which is equal to the analogue transfer function
+	 evaluated at H(s) where s = (2/T) * tan(wd*T/2) hence why the cutoff used is the pre warped analogue equivalent.
+	 See Art Of VA Filter Design 3.8 Bilinear Transform Section */
+	magnitude = sValue / (sValue + cutOff);
+
+	magnitude = magnitude * m_gain.getGainLinear();
+
+	//Convert to db for log db response display
+	magnitude = Decibels::gainToDecibels(magnitude);
+	return  magnitude;
 }
 
 std::vector<ChannelStripProcessorBase::ProcessorParam> HPFilterProcessor::getProcessorParams()
@@ -274,6 +305,33 @@ LPFilterProcessor::LPFilterProcessor()
 ChannelStripProcessorBase::ChannelStripProcessorType LPFilterProcessor::getType()
 {
 	return ChannelStripProcessorBase::CSPT_LowPass;
+}
+
+float LPFilterProcessor::getMagnitudeResponse(float freq)
+{
+	float magnitude = 0.0;
+	float T = 1 / m_sampleRate;
+
+	float wdCutoff = 2 * MathConstants<float>::pi * m_filter.getCutoffFrequency();
+
+	//Calculating pre-warped/analogue cutoff frequency to use in virtual analogue frequeny response calculations
+	float cutOff = (2 / T) * tan(wdCutoff * T / 2);
+
+	//Digital frequency to evaluate
+	float wdEval = 2 * MathConstants<float>::pi * freq;
+	float sValue = (2 / T) * tan(wdEval * T / 2);
+
+
+	/* This is the digital transfer function which is equal to the analogue transfer function
+	 evaluated at H(s) where s = (2/T) * tan(wd*T/2) hence why the cutoff used is the pre warped analogue equivalent.
+	 See Art Of VA Filter Design 3.8 Bilinear Transform Section */
+	magnitude = cutOff / (sValue + cutOff);
+
+	magnitude = magnitude * m_gain.getGainLinear();
+
+	//Convert to db for log db response display
+	magnitude = Decibels::gainToDecibels(magnitude);
+	return  magnitude;
 }
 
 std::vector<ChannelStripProcessorBase::ProcessorParam> LPFilterProcessor::getProcessorParams()
