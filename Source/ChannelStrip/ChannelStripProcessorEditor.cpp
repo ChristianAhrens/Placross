@@ -458,22 +458,44 @@ private:
 };
 
 //==============================================================================
-class FilterParameterComponent : public CustomColouredParameter,
+class FilterParameterComponent :
+    private ChannelStripParameterListener, 
+    public CustomColouredParameter,
     public Component
 {
 public:
     FilterParameterComponent(ChannelStripProcessorBase& proc)
-        : m_processor(proc)
+        : ChannelStripParameterListener(proc, proc.getParameters()), m_processor(proc)
     {
         m_type = proc.getType();
 
         m_filterPathThickness = 4.0;
-        m_magResponseColour = Colours::white;
-        m_displayBackgroundColor = Colours::black;
+        m_magResponseColour = getLookAndFeel().findColour(TableHeaderComponent::ColourIds::outlineColourId);
 
         m_minFrequency = 20.0;
         m_maxFrequency = 20000.0;
         m_maxDecibels = 20.0;
+
+
+
+
+        auto rangeMin = 0.0f;
+        auto rangeMax = 1.0f;
+        auto defaultVal = 1.0f;
+        auto rangeStep = 1.0f;
+        auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter());
+        if (fParam)
+        {
+            rangeMin = fParam->getNormalisableRange().getRange().getStart();
+            rangeMax = fParam->getNormalisableRange().getRange().getEnd();
+            defaultVal = *fParam;
+            rangeStep = fParam->getNormalisableRange().interval;
+        }
+
+        // Set the initial value.
+        handleNewParameterValue(-1);
+
+        setSize(80, 80);
     };
 
     void setCustomColour(const Colour& colour) override
@@ -483,11 +505,8 @@ public:
 
     void paint(Graphics& g) override
     {
-        float width = (float)getWidth();
-        float height = (float)getHeight();
-
-        g.setColour(m_displayBackgroundColor);
-        g.fillRect(0.0, 0.0, width, height);
+        g.setColour(getLookAndFeel().findColour(ResizableWindow::backgroundColourId).darker());
+        g.fillRect(getBounds());
 
         m_magnitudeResponsePath.clear();
 
@@ -507,6 +526,13 @@ public:
         g.setColour(m_magResponseColour);
         g.strokePath(m_magnitudeResponsePath, PathStrokeType(m_filterPathThickness));
 
+        // draw cutoff thumb
+        auto freq = m_processor.getFilterFequency();
+        auto thumbDiameter = 3.0f * m_filterPathThickness;
+        auto thumbXPos = frequencyToxAxis(freq);
+        auto thumbYPos = dbToYAxis(m_processor.getMagnitudeResponse(freq));
+        g.fillEllipse(thumbXPos - 0.5f * thumbDiameter, thumbYPos - 0.5f * thumbDiameter, thumbDiameter, thumbDiameter);
+
         /*
            Fill area under/inside path with same colour at a lower alpha / highlight value.
            Try setting magResponseColour.withAlpha value to different values to get a fill shade you like.
@@ -514,10 +540,31 @@ public:
         g.setColour(m_magResponseColour.withAlpha((uint8)0x9a));
         g.fillPath(m_magnitudeResponsePath);
 
+        g.setColour(getLookAndFeel().findColour(TableHeaderComponent::ColourIds::outlineColourId));
+        g.drawRect(getBounds());
     }
 
-    void resized() override
+    void mouseDown(const MouseEvent& e) override
     {
+        thumbStartedDragging();
+        mouseDrag(e); // forward event to drag handling method to avoid code copy (we want to do the same thing with position)
+    }
+    void mouseDrag(const MouseEvent& e) override
+    {
+        auto pos = e.getPosition();
+
+        auto newFreqVal = xAxisToFrequency(pos.getX());
+        auto clippedFreqVal = jlimit(m_minFrequency, m_maxFrequency, newFreqVal);
+
+        auto newGainVal = Decibels::decibelsToGain(yAxisToGaindB(pos.getY()));
+        auto clippedGainVal = jlimit(0.0f, 1.0f, newGainVal);
+
+        thumbValueChanged(newFreqVal, newGainVal);
+        //thumbValueChanged(clippedFreqVal, clippedGainVal);
+    }
+    void mouseUp(const MouseEvent& e) override
+    {
+        thumbStoppedDragging();
     }
 
 private:
@@ -531,8 +578,8 @@ private:
             Try commeting out - (filterPathThickness/2) to see the effect. This line hides the highlighted path edge so that the path edge
             highlight shows only on the top of the magnitude response path.
          */
-        m_magnitudeResponsePath.startNewSubPath((0.0f - (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
         magnitudeDBValue = m_processor.getMagnitudeResponse(m_minFrequency);
+        m_magnitudeResponsePath.startNewSubPath((0.0f - (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
         m_magnitudeResponsePath.lineTo((0.0f - (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue));
 
         for (float xPos = 0.0; xPos < ((float)getWidth() + (m_filterPathThickness / 2)); xPos += (m_filterPathThickness / 2))
@@ -585,10 +632,21 @@ private:
 
     float xAxisToFrequency(float xPos)
     {
-        float width = static_cast<float>(getWidth());
+        auto width = static_cast<float>(getWidth());
+
         //Computes frequency from position on x axis of component. So if the xPos is equal to the component width the value returned will be maxFrequency.
-        float frequency = m_minFrequency * pow((m_maxFrequency / m_minFrequency), (xPos / width));
+        auto frequency = m_minFrequency * std::pow((m_maxFrequency / m_minFrequency), (xPos / width));
+
         return frequency;
+    }
+    float frequencyToxAxis(float freq)
+    {
+        auto width = static_cast<float>(getWidth());
+
+        //Computes position on x axis of component from given frequency.
+        auto xPos = width * (std::log(freq / m_minFrequency) / std::log(m_maxFrequency / m_minFrequency));
+
+        return xPos;
     }
 
     float dbToYAxis(float dbGain)
@@ -607,199 +665,92 @@ private:
         float yPosition = scaledDbGain + (height / 2);
         return yPosition;
     }
+    float yAxisToGaindB(float yPos)
+    {
+        auto height = static_cast<float>(getHeight());
+        auto y = height - yPos;
+
+        auto gainRatio = ((y - 0.5f * height) / (0.5f * height));
+        auto scaledDbGain = gainRatio * m_maxDecibels;
+
+        return scaledDbGain;
+    }
+
+    void handleNewParameterValue(int parameterIndex) override
+    {
+        if (!m_isDragging)
+        {
+            //auto defaultVal = 1.0f;
+            //auto param = &getParameter(parameterIndex);
+            //
+            //auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+            //if (fParam)
+            //    defaultVal = *fParam;
+            //else
+            //    defaultVal = param->getValue();
+            //
+            //m_slider.setValue(defaultVal, dontSendNotification);
+        }
+    }
+
+    void thumbValueChanged(float newFreqVal, float newGainVal)
+    {
+        // handle changed freq val
+        if (getParameter(0).getValue() != newFreqVal)
+        {
+            if (!m_isDragging)
+                getParameter(0).beginChangeGesture();
+        
+            getParameter(0).setValueNotifyingHost(newFreqVal);
+        
+            if (!m_isDragging)
+                getParameter(0).endChangeGesture();
+        }
+
+        // handle changed gain val
+        if (getParameter(1).getValue() != newGainVal)
+        {
+            if (!m_isDragging)
+                getParameter(1).beginChangeGesture();
+
+            getParameter(1).setValueNotifyingHost(newGainVal);
+
+            if (!m_isDragging)
+                getParameter(1).endChangeGesture();
+        }
+
+        repaint();
+    }
+
+    void thumbStartedDragging()
+    {
+        m_isDragging = true;
+
+        for(auto parameter : getParameters())
+            parameter->beginChangeGesture();
+    }
+
+    void thumbStoppedDragging()
+    {
+        m_isDragging = false;
+
+        for (auto parameter : getParameters())
+            parameter->endChangeGesture();
+    }
+
+    bool m_isDragging = false;
 
     ChannelStripProcessorBase::ChannelStripProcessorType    m_type = ChannelStripProcessorBase::ChannelStripProcessorType::CSPT_Invalid;
     ChannelStripProcessorBase&                              m_processor;
     Path                                                    m_magnitudeResponsePath;
     float                                                   m_filterPathThickness;
     Colour                                                  m_magResponseColour;
-    Colour                                                  m_displayBackgroundColor;
 
     float                                                   m_minFrequency;
     float                                                   m_maxFrequency;
     float                                                   m_maxDecibels;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterParameterComponent)
-};
-
-//==============================================================================
-class HighPassParameterComponent final : 
-    private ChannelStripParameterListener, 
-    public FilterParameterComponent
-{
-public:
-    HighPassParameterComponent(ChannelStripProcessorBase& proc)
-        : ChannelStripParameterListener(proc, proc.getParameters()), FilterParameterComponent(proc)
-    {
-        auto rangeMin = 0.0f;
-        auto rangeMax = 1.0f;
-        auto defaultVal = 1.0f;
-        auto rangeStep = 1.0f;
-        auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter());
-        if (fParam)
-        {
-            rangeMin = fParam->getNormalisableRange().getRange().getStart();
-            rangeMax = fParam->getNormalisableRange().getRange().getEnd();
-            defaultVal = *fParam;
-            rangeStep = fParam->getNormalisableRange().interval;
-        }
-
-        //m_slider.setRange(rangeMin, rangeMax, rangeStep);
-        //m_slider.setSkewFactorFromMidPoint(rangeMax / 5);
-        //
-        //addAndMakeVisible(m_slider);
-
-        // Set the initial value.
-        handleNewParameterValue(-1);
-
-        //m_slider.onValueChange = [this] { sliderValueChanged(); };
-        //m_slider.onDragStart = [this] { sliderStartedDragging(); };
-        //m_slider.onDragEnd = [this] { sliderStoppedDragging(); };
-
-        setSize(80, 80);
-    }
-
-private:
-    void handleNewParameterValue(int parameterIndex) override
-    {
-        //if (!m_isDragging)
-        //{
-        //    auto defaultVal = 1.0f;
-        //    auto param = &getParameter(parameterIndex);
-        //
-        //    auto fParam = dynamic_cast<AudioParameterFloat*>(param);
-        //    if (fParam)
-        //        defaultVal = *fParam;
-        //    else
-        //        defaultVal = param->getValue();
-        //
-        //    m_slider.setValue(defaultVal, dontSendNotification);
-        //}
-    }
-
-    void sliderValueChanged()
-    {
-        //auto newVal = (float)m_slider.getValue();
-        //
-        //if (getParameter().getValue() != newVal)
-        //{
-        //    if (!m_isDragging)
-        //        getParameter().beginChangeGesture();
-        //
-        //    getParameter().setValueNotifyingHost((float)m_slider.getValue());
-        //
-        //    if (!m_isDragging)
-        //        getParameter().endChangeGesture();
-        //}
-    }
-
-    void sliderStartedDragging()
-    {
-        m_isDragging = true;
-        getParameter().beginChangeGesture();
-    }
-
-    void sliderStoppedDragging()
-    {
-        m_isDragging = false;
-        getParameter().endChangeGesture();
-    }
-
-private:
-    //Slider m_slider{ Slider::Rotary, Slider::TextEntryBoxPosition::TextBoxBelow };
-    bool m_isDragging = false;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(HighPassParameterComponent)
-};
-
-//==============================================================================
-class LowPassParameterComponent final :
-    private ChannelStripParameterListener,
-    public FilterParameterComponent
-{
-public:
-    LowPassParameterComponent(ChannelStripProcessorBase& proc)
-        : ChannelStripParameterListener(proc, proc.getParameters()), FilterParameterComponent(proc)
-    {
-        auto rangeMin = 0.0f;
-        auto rangeMax = 1.0f;
-        auto defaultVal = 1.0f;
-        auto rangeStep = 1.0f;
-        auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter());
-        if (fParam)
-        {
-            rangeMin = fParam->getNormalisableRange().getRange().getStart();
-            rangeMax = fParam->getNormalisableRange().getRange().getEnd();
-            defaultVal = *fParam;
-            rangeStep = fParam->getNormalisableRange().interval;
-        }
-
-        //m_slider.setRange(rangeMin, rangeMax, rangeStep);
-        //m_slider.setSkewFactorFromMidPoint(rangeMax / 5);
-        //
-        //addAndMakeVisible(m_slider);
-
-        // Set the initial value.
-        handleNewParameterValue(-1);
-
-        //m_slider.onValueChange = [this] { sliderValueChanged(); };
-        //m_slider.onDragStart = [this] { sliderStartedDragging(); };
-        //m_slider.onDragEnd = [this] { sliderStoppedDragging(); };
-        
-        setSize(80, 80);
-    }
-
-private:
-    void handleNewParameterValue(int parameterIndex) override
-    {
-        //if (!m_isDragging)
-        //{
-        //    auto defaultVal = 1.0f;
-        //    auto param = &getParameter(parameterIndex);
-        //
-        //    auto fParam = dynamic_cast<AudioParameterFloat*>(param);
-        //    if (fParam)
-        //        defaultVal = *fParam;
-        //    else
-        //        defaultVal = param->getValue();
-        //
-        //    m_slider.setValue(defaultVal, dontSendNotification);
-        //}
-    }
-
-    void sliderValueChanged()
-    {
-        //auto newVal = (float)m_slider.getValue();
-        //
-        //if (getParameter().getValue() != newVal)
-        //{
-        //    if (!m_isDragging)
-        //        getParameter().beginChangeGesture();
-        //
-        //    getParameter().setValueNotifyingHost((float)m_slider.getValue());
-        //
-        //    if (!m_isDragging)
-        //        getParameter().endChangeGesture();
-        //}
-    }
-
-    void sliderStartedDragging()
-    {
-        m_isDragging = true;
-        getParameter().beginChangeGesture();
-    }
-
-    void sliderStoppedDragging()
-    {
-        m_isDragging = false;
-        getParameter().endChangeGesture();
-    }
-
-private:
-    //Slider m_slider{ Slider::Rotary, Slider::TextEntryBoxPosition::TextBoxBelow };
-    bool m_isDragging = false;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LowPassParameterComponent)
 };
 
 //==============================================================================
@@ -810,11 +761,11 @@ public:
         : m_parameters(processor.getParameters()), m_singleParameterIndex(parameterIndex)
     {
         if (m_singleParameterIndex != -1)
-        {
             m_parameterName.setText(m_parameters.getUnchecked(m_singleParameterIndex)->getName(128), dontSendNotification);
-            m_parameterName.setJustificationType(Justification::left);
-            addAndMakeVisible(m_parameterName);
-        }
+        else
+            m_parameterName.setText(processor.getName(), dontSendNotification);
+        m_parameterName.setJustificationType(Justification::left);
+        addAndMakeVisible(m_parameterName);
 
         m_parameterComp = createParameterComp(processor);
         if (m_parameterComp)
@@ -858,13 +809,13 @@ private:
         // create a custom highpass filter parameter component if the processor is one of our own highpass type
         if (processor.getType() == ChannelStripProcessorBase::CSPT_HighPass)
         {
-            return std::make_unique<HighPassParameterComponent>(processor);
+            return std::make_unique<FilterParameterComponent>(processor);
         }
 
         // create a custom lowpass filter parameter component if the processor is one of our own lowpass type
         if (processor.getType() == ChannelStripProcessorBase::CSPT_LowPass)
         {
-            return std::make_unique<LowPassParameterComponent>(processor);
+            return std::make_unique<FilterParameterComponent>(processor);
         }
 
         // The AU, AUv3 and VST (only via a .vstxml file) SDKs support
@@ -985,7 +936,7 @@ struct ChannelStripProcessorEditor::Pimpl
     {
         m_view.setBounds(size);
         auto content = m_view.getViewedComponent();
-        content->setSize(m_view.getWidth(), content->getHeight());
+        content->setSize(m_view.getWidth(), m_view.getHeight());
     }
 
     void setChannelColour(const Colour& colour)

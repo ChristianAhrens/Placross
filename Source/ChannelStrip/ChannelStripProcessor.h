@@ -51,8 +51,13 @@ public:
     //==============================================================================
     ChannelStripProcessorBase();
 
-    virtual ChannelStripProcessorType getType() = 0;
+    void initParameters();
 
+    //==============================================================================
+    virtual ChannelStripProcessorType getType() = 0;
+    virtual void updateParameterValues() = 0;
+    virtual float getFilterFequency() = 0;
+    virtual float getFilterGain() = 0;
     virtual float getMagnitudeResponse(float freq) = 0;
 
     //==============================================================================
@@ -76,10 +81,6 @@ public:
     //==============================================================================
     void getStateInformation(MemoryBlock&) override;
     void setStateInformation(const void*, int) override;
-
-    //==============================================================================
-    void initParameters();
-    virtual void updateParameterValues() = 0;
 
     //==============================================================================
     AudioProcessorEditor* createEditor() override;
@@ -111,6 +112,8 @@ public:
     
     ChannelStripProcessorType getType() override;
     float getMagnitudeResponse(float freq) override;
+    float getFilterFequency() override;
+    float getFilterGain() override;
 
     //==============================================================================
     void processBlock (AudioSampleBuffer& buffer, MidiBuffer&) override;
@@ -136,6 +139,8 @@ public:
 
     ChannelStripProcessorType getType() override;
     float getMagnitudeResponse(float freq) override;
+    float getFilterFequency() override;
+    float getFilterGain() override;
 
     //==============================================================================
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;
@@ -162,6 +167,8 @@ public:
 
     ChannelStripProcessorType getType() override;
     float getMagnitudeResponse(float freq) override;
+    float getFilterFequency() override;
+    float getFilterGain() override;
 
     //==============================================================================
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;
