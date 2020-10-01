@@ -653,18 +653,18 @@ private:
             auto param = &getParameter(0);
             auto fParam = dynamic_cast<AudioParameterFloat*>(param);
             if (fParam)
-                m_freqEdit->setText(String(*fParam));
+                m_freqEdit->setText(String(*fParam) + " Hz", false);
             else if (param)
-                m_freqEdit->setText(String(param->getValue()));
+                m_freqEdit->setText(String(param->getValue()) + " Hz", false);
         }
         else if (&editor == m_gainEdit.get())
         {
             auto param = &getParameter(1);
             auto fParam = dynamic_cast<AudioParameterFloat*>(param);
             if (fParam)
-                m_gainEdit->setText(String(*fParam));
+                m_gainEdit->setText(String(*fParam) + " dBFS", false);
             else if (param)
-                m_gainEdit->setText(String(param->getValue()));
+                m_gainEdit->setText(String(param->getValue()) + " dBFS", false);
         }
     }
 
@@ -791,9 +791,9 @@ private:
             defaultVal = param->getValue();
         
         if (m_processor.getParameterID(parameterIndex) == "lpff" || m_processor.getParameterID(parameterIndex) == "hpff")
-            m_freqEdit->setText(String(defaultVal), false);
+            m_freqEdit->setText(String(defaultVal) + " Hz", false);
         if (m_processor.getParameterID(parameterIndex) == "lpfg" || m_processor.getParameterID(parameterIndex) == "hpfg")
-            m_gainEdit->setText(String(defaultVal), false);
+            m_gainEdit->setText(String(defaultVal) + " dBFS", false);
     }
 
     //==========================================================================
