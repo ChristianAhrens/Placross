@@ -470,7 +470,8 @@ private:
 class FilterParameterComponent :
     private ChannelStripParameterListener, 
     public CustomColouredParameter,
-    public Component
+    public Component,
+    public TextEditor::Listener
 {
 public:
     FilterParameterComponent(ChannelStripProcessorBase& proc)
@@ -493,9 +494,11 @@ public:
         }
 
         m_freqEdit = std::make_unique<TextEditor>();
+        m_freqEdit->addListener(this);
         addAndMakeVisible(m_freqEdit.get());
         handleNewParameterValue(0);
         m_gainEdit = std::make_unique<TextEditor>();
+        m_gainEdit->addListener(this);
         addAndMakeVisible(m_gainEdit.get());
         handleNewParameterValue(1);
     };
@@ -505,12 +508,13 @@ public:
         m_magResponseColour = colour;
     }
 
+    //==========================================================================
     void paint(Graphics& g) override
     {
         g.saveState();
 
         auto filtergraphBounds = getLocalBounds().reduced(3);
-        filtergraphBounds.removeFromBottom(22);
+        filtergraphBounds.removeFromBottom(24);
 
         // set the graphics context so that everything we draw outside the filtergraphbounds is clipped (we need to close the graph path somehow outside the visible area)
         g.getInternalContext().clipToRectangle(filtergraphBounds);
@@ -567,6 +571,7 @@ public:
         fb.performLayout(textEditorBounds.toFloat());
     }
 
+    //==========================================================================
     void mouseDown(const MouseEvent& e) override
     {
         thumbStartedDragging();
@@ -595,7 +600,74 @@ public:
         thumbStoppedDragging();
     }
 
+    //==========================================================================
+    void textEditorTextChanged(TextEditor& editor) override { ignoreUnused(editor); }
+    void textEditorReturnKeyPressed(TextEditor& editor) override { processChangedTextEditor(editor); }
+    void textEditorEscapeKeyPressed(TextEditor& editor) override { resetChangedTextEditor(editor); }
+    void textEditorFocusLost(TextEditor& editor) override { processChangedTextEditor(editor); }
+
 private:
+    //==========================================================================
+    void processChangedTextEditor(TextEditor& editor)
+    {
+        if (&editor == m_freqEdit.get())
+        {
+            auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter(0));
+            if (fParam)
+            {
+                auto minFrequency = fParam->getNormalisableRange().getRange().getStart();
+                auto maxFrequency = fParam->getNormalisableRange().getRange().getEnd();
+
+                auto newFreqVal = jlimit(minFrequency, maxFrequency, m_freqEdit->getText().getFloatValue());
+
+                fParam->beginChangeGesture();
+                fParam->setValueNotifyingHost(newFreqVal);
+                fParam->endChangeGesture();
+            }
+        }
+        else if (&editor == m_gainEdit.get())
+        {
+            auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter(1));
+            if (fParam)
+            {
+                auto minGain = fParam->getNormalisableRange().getRange().getStart();
+                auto maxGain = fParam->getNormalisableRange().getRange().getEnd();
+
+                auto newGainVal = jlimit(minGain, maxGain, m_gainEdit->getText().getFloatValue());
+
+                fParam->beginChangeGesture();
+                fParam->setValueNotifyingHost(newGainVal);
+                fParam->endChangeGesture();
+            }
+        }
+        else
+            return;
+
+        repaint();
+    }
+    void resetChangedTextEditor(TextEditor& editor)
+    {
+        if (&editor == m_freqEdit.get())
+        {
+            auto param = &getParameter(0);
+            auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+            if (fParam)
+                m_freqEdit->setText(String(*fParam));
+            else if (param)
+                m_freqEdit->setText(String(param->getValue()));
+        }
+        else if (&editor == m_gainEdit.get())
+        {
+            auto param = &getParameter(1);
+            auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+            if (fParam)
+                m_gainEdit->setText(String(*fParam));
+            else if (param)
+                m_gainEdit->setText(String(param->getValue()));
+        }
+    }
+
+    //==========================================================================
     void drawLowpass(const Rectangle<int>& filtergraphBounds)
     {
         float freq = 0.0;
@@ -665,6 +737,7 @@ private:
         m_magnitudeResponsePath.lineTo((origX - (m_filterPathThickness / 2)), bottom);
     }
 
+    //==========================================================================
     float xAxisToFrequency(int xPos, float refWidth)
     {
         //Computes frequency from position on x axis of component. So if the xPos is equal to the component width the value returned will be maxFrequency.
@@ -704,6 +777,7 @@ private:
         return yPosition;
     }
 
+    //==========================================================================
     void handleNewParameterValue(int parameterIndex) override
     {
         auto param = &getParameter(parameterIndex);
@@ -715,12 +789,13 @@ private:
         else
             defaultVal = param->getValue();
         
-        if (m_processor.getParameterID(parameterIndex) == "hpff")
+        if (m_processor.getParameterID(parameterIndex) == "lpff" || m_processor.getParameterID(parameterIndex) == "hpff")
             m_freqEdit->setText(String(defaultVal), false);
-        if (m_processor.getParameterID(parameterIndex) == "gain")
+        if (m_processor.getParameterID(parameterIndex) == "lpfg" || m_processor.getParameterID(parameterIndex) == "hpfg")
             m_gainEdit->setText(String(defaultVal), false);
     }
 
+    //==========================================================================
     void thumbValueChanged(float newFreqVal, float newGainVal)
     {
         // handle changed freq val
@@ -749,7 +824,6 @@ private:
 
         repaint();
     }
-
     void thumbStartedDragging()
     {
         m_isDragging = true;
@@ -757,7 +831,6 @@ private:
         for(auto parameter : getParameters())
             parameter->beginChangeGesture();
     }
-
     void thumbStoppedDragging()
     {
         m_isDragging = false;
@@ -766,6 +839,7 @@ private:
             parameter->endChangeGesture();
     }
 
+    //==========================================================================
     bool m_isDragging = false;
 
     ChannelStripProcessorBase::ChannelStripProcessorType    m_type = ChannelStripProcessorBase::ChannelStripProcessorType::CSPT_Invalid;
