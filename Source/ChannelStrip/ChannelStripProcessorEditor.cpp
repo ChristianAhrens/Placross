@@ -89,7 +89,16 @@ private:
     {
         if (m_parameterValueHasChanged.compareAndSetBool(0, 1))
         {
-            handleNewParameterValue(m_singleParameterIndex);
+            if (m_singleParameterIndex > -1)
+            {
+                handleNewParameterValue(m_singleParameterIndex);
+            }
+            else
+            {
+                for (auto parameter : getParameters())
+                    if (parameter)
+                        handleNewParameterValue(parameter->getParameterIndex());
+            }
             startTimerHz(50);
         }
         else
@@ -476,26 +485,19 @@ public:
         m_maxFrequency = 20000.0;
         m_maxDecibels = 20.0;
 
-
-
-
-        auto rangeMin = 0.0f;
-        auto rangeMax = 1.0f;
-        auto defaultVal = 1.0f;
-        auto rangeStep = 1.0f;
-        auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter());
+        auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter(0));
         if (fParam)
         {
-            rangeMin = fParam->getNormalisableRange().getRange().getStart();
-            rangeMax = fParam->getNormalisableRange().getRange().getEnd();
-            defaultVal = *fParam;
-            rangeStep = fParam->getNormalisableRange().interval;
+            m_minFrequency = fParam->getNormalisableRange().getRange().getStart();
+            m_maxFrequency = fParam->getNormalisableRange().getRange().getEnd();
         }
 
-        // Set the initial value.
-        handleNewParameterValue(-1);
-
-        setSize(80, 80);
+        m_freqEdit = std::make_unique<TextEditor>();
+        addAndMakeVisible(m_freqEdit.get());
+        handleNewParameterValue(0);
+        m_gainEdit = std::make_unique<TextEditor>();
+        addAndMakeVisible(m_gainEdit.get());
+        handleNewParameterValue(1);
     };
 
     void setCustomColour(const Colour& colour) override
@@ -505,18 +507,26 @@ public:
 
     void paint(Graphics& g) override
     {
+        g.saveState();
+
+        auto filtergraphBounds = getLocalBounds().reduced(3);
+        filtergraphBounds.removeFromBottom(22);
+
+        // set the graphics context so that everything we draw outside the filtergraphbounds is clipped (we need to close the graph path somehow outside the visible area)
+        g.getInternalContext().clipToRectangle(filtergraphBounds);
+
         g.setColour(getLookAndFeel().findColour(ResizableWindow::backgroundColourId).darker());
-        g.fillRect(getBounds());
+        g.fillRect(filtergraphBounds);
 
         m_magnitudeResponsePath.clear();
 
         switch (m_type)
         {
         case ChannelStripProcessorBase::ChannelStripProcessorType::CSPT_LowPass:
-            drawLowpass();
+            drawLowpass(filtergraphBounds);
             break;
         case ChannelStripProcessorBase::ChannelStripProcessorType::CSPT_HighPass:
-            drawHighpass();
+            drawHighpass(filtergraphBounds);
             break;
         }
 
@@ -529,8 +539,8 @@ public:
         // draw cutoff thumb
         auto freq = m_processor.getFilterFequency();
         auto thumbDiameter = 3.0f * m_filterPathThickness;
-        auto thumbXPos = frequencyToxAxis(freq);
-        auto thumbYPos = dbToYAxis(m_processor.getMagnitudeResponse(freq));
+        auto thumbXPos = frequencyToxAxis(freq, filtergraphBounds.getWidth());
+        auto thumbYPos = dbToYAxis(m_processor.getMagnitudeResponse(freq), filtergraphBounds.getHeight());
         g.fillEllipse(thumbXPos - 0.5f * thumbDiameter, thumbYPos - 0.5f * thumbDiameter, thumbDiameter, thumbDiameter);
 
         /*
@@ -541,7 +551,20 @@ public:
         g.fillPath(m_magnitudeResponsePath);
 
         g.setColour(getLookAndFeel().findColour(TableHeaderComponent::ColourIds::outlineColourId));
-        g.drawRect(getBounds());
+        g.drawRect(filtergraphBounds);
+
+        g.restoreState();
+    }
+    void resized() override
+    {
+        auto textEditorBounds = getLocalBounds().reduced(3).removeFromBottom(22);
+
+        FlexBox fb;
+        fb.flexDirection = FlexBox::Direction::row;
+        fb.justifyContent = FlexBox::JustifyContent::flexStart;
+        fb.items.add(FlexItem(*m_freqEdit.get()).withFlex(1).withMargin(FlexItem::Margin(2, 2, 0 ,0)));
+        fb.items.add(FlexItem(*m_gainEdit.get()).withFlex(1).withMargin(FlexItem::Margin(2, 0, 0, 2)));
+        fb.performLayout(textEditorBounds.toFloat());
     }
 
     void mouseDown(const MouseEvent& e) override
@@ -553,10 +576,13 @@ public:
     {
         auto pos = e.getPosition();
 
-        auto newFreqVal = xAxisToFrequency(pos.getX());
+        auto filtergraphBounds = getLocalBounds().reduced(3);
+        filtergraphBounds.removeFromBottom(22);
+
+        auto newFreqVal = xAxisToFrequency(pos.getX(), filtergraphBounds.getWidth());
         auto clippedFreqVal = jlimit(m_minFrequency, m_maxFrequency, newFreqVal);
 
-        auto newGainVal = Decibels::decibelsToGain(yAxisToGaindB(pos.getY()));
+        auto newGainVal = Decibels::decibelsToGain(yAxisToGaindB(pos.getY(), filtergraphBounds.getHeight()));
         auto clippedGainVal = jlimit(0.0f, 1.0f, newGainVal);
 
         thumbValueChanged(newFreqVal, newGainVal);
@@ -564,14 +590,20 @@ public:
     }
     void mouseUp(const MouseEvent& e) override
     {
+        ignoreUnused(e);
+
         thumbStoppedDragging();
     }
 
 private:
-    void drawLowpass()
+    void drawLowpass(const Rectangle<int>& filtergraphBounds)
     {
         float freq = 0.0;
         float magnitudeDBValue = 0.0;
+        float origX = static_cast<float>(filtergraphBounds.getX());
+        float width = static_cast<float>(filtergraphBounds.getWidth());
+        float height = static_cast<float>(filtergraphBounds.getHeight());
+        float bottom = static_cast<float>(filtergraphBounds.getBottom() + 1);
 
         /*
             LowPass so start path on left hand side of component i.e at 0.0f - using 0.0f - (filterPathThickness/2) for asthetic purposes
@@ -579,82 +611,88 @@ private:
             highlight shows only on the top of the magnitude response path.
          */
         magnitudeDBValue = m_processor.getMagnitudeResponse(m_minFrequency);
-        m_magnitudeResponsePath.startNewSubPath((0.0f - (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
-        m_magnitudeResponsePath.lineTo((0.0f - (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue));
+        m_magnitudeResponsePath.startNewSubPath((origX - (m_filterPathThickness / 2)), bottom);
+        m_magnitudeResponsePath.lineTo((origX - (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue, height));
 
-        for (float xPos = 0.0; xPos < ((float)getWidth() + (m_filterPathThickness / 2)); xPos += (m_filterPathThickness / 2))
+        for (float xPos = origX; xPos < (width + m_filterPathThickness); xPos += (m_filterPathThickness / 2))
         {
             //Get the frequency value for the filter's magnitude response calculation
-            freq = xAxisToFrequency(xPos);
+            freq = xAxisToFrequency(static_cast<int>(xPos), width);
             magnitudeDBValue = m_processor.getMagnitudeResponse(freq);
-            m_magnitudeResponsePath.lineTo(xPos, dbToYAxis(magnitudeDBValue));
+            m_magnitudeResponsePath.lineTo(xPos, dbToYAxis(magnitudeDBValue, height));
         }
 
         magnitudeDBValue = m_processor.getMagnitudeResponse(m_maxFrequency);
-        m_magnitudeResponsePath.lineTo(((float)getWidth() + (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue));
+        m_magnitudeResponsePath.lineTo((width + m_filterPathThickness), dbToYAxis(magnitudeDBValue, height));
 
         /*
             Dirty Trick to close the path nicely when cutoff is at max level (this is not apparent for virtual analogue filters that have not been
             oversampled when cutoff is close to nyquist as the response is pulled to zero). Try commenting this line out and running the plugin at
             higher sample rate i.e 96khz to see the visual result of the path closing without this.
          */
-        m_magnitudeResponsePath.lineTo(((float)getWidth() + (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
+        m_magnitudeResponsePath.lineTo((width + m_filterPathThickness), bottom);
 
     }
-
-    void drawHighpass()
+    void drawHighpass(const Rectangle<int>& filtergraphBounds)
     {
         float freq = 0.0;
         float magnitudeDBValue = 0.0;
+        float origX = static_cast<float>(filtergraphBounds.getX());
+        float width = static_cast<float>(filtergraphBounds.getWidth());
+        float height = static_cast<float>(filtergraphBounds.getHeight());
+        float bottom = static_cast<float>(filtergraphBounds.getBottom() + 1);
 
         //If HighPass start path on right hand side of component i.e at component width.
         magnitudeDBValue = m_processor.getMagnitudeResponse(m_maxFrequency);
-        m_magnitudeResponsePath.startNewSubPath(((float)getWidth() + (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
-        m_magnitudeResponsePath.lineTo(((float)getWidth() + (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue));
+        m_magnitudeResponsePath.startNewSubPath((width + m_filterPathThickness), bottom);
+        m_magnitudeResponsePath.lineTo((width + m_filterPathThickness), dbToYAxis(magnitudeDBValue, height));
 
-        for (float xPos = ((float)getWidth()); xPos > (m_filterPathThickness / 2); xPos -= (m_filterPathThickness / 2))
+        for (float xPos = width; xPos > (m_filterPathThickness / 2); xPos -= (m_filterPathThickness / 2))
         {
             //Get the frequency value for the filter's magnitude response calculation
-            freq = xAxisToFrequency(xPos);
+            freq = xAxisToFrequency(static_cast<int>(xPos), width);
             magnitudeDBValue = m_processor.getMagnitudeResponse(freq);
-            m_magnitudeResponsePath.lineTo(xPos, dbToYAxis(magnitudeDBValue));
+            m_magnitudeResponsePath.lineTo(xPos, dbToYAxis(magnitudeDBValue, height));
         }
 
         magnitudeDBValue = m_processor.getMagnitudeResponse(m_minFrequency);
-        m_magnitudeResponsePath.lineTo((0.0f - (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue));
+        m_magnitudeResponsePath.lineTo((origX - (m_filterPathThickness / 2)), dbToYAxis(magnitudeDBValue, height));
 
         /*
             Dirty trick again to close the path nicely when cutoff at min level for High Pass - try cmmenting this line out to se the visual
             effect on the reponse path closing without it
          */
-        m_magnitudeResponsePath.lineTo((0.0f - (m_filterPathThickness / 2)), (getBottom() - (m_filterPathThickness / 2)));
+        m_magnitudeResponsePath.lineTo((origX - (m_filterPathThickness / 2)), bottom);
     }
 
-    float xAxisToFrequency(float xPos)
+    float xAxisToFrequency(int xPos, float refWidth)
     {
-        auto width = static_cast<float>(getWidth());
-
         //Computes frequency from position on x axis of component. So if the xPos is equal to the component width the value returned will be maxFrequency.
-        auto frequency = m_minFrequency * std::pow((m_maxFrequency / m_minFrequency), (xPos / width));
+        auto frequency = m_minFrequency * std::pow((m_maxFrequency / m_minFrequency), (xPos / refWidth));
 
         return frequency;
     }
-    float frequencyToxAxis(float freq)
+    float frequencyToxAxis(float freq, float refWidth)
     {
-        auto width = static_cast<float>(getWidth());
-
         //Computes position on x axis of component from given frequency.
-        auto xPos = width * (std::log(freq / m_minFrequency) / std::log(m_maxFrequency / m_minFrequency));
+        auto xPos = refWidth * (std::log(freq / m_minFrequency) / std::log(m_maxFrequency / m_minFrequency));
 
         return xPos;
     }
 
-    float dbToYAxis(float dbGain)
+    float yAxisToGaindB(int yPos, float refHeight)
     {
-        float height = static_cast<float>(getHeight());
+        auto y = refHeight - yPos;
 
+        auto gainRatio = ((y - 0.5f * refHeight) / (0.5f * refHeight));
+        auto scaledDbGain = gainRatio * m_maxDecibels;
+
+        return scaledDbGain;
+    }
+    float dbToYAxis(float dbGain, float refHeight)
+    {
         //Scale gain with this value, height of component is divded by maxDB * 2 for -max to +max db response display
-        float scale = -(height) / (m_maxDecibels * 2);
+        float scale = -(refHeight) / (m_maxDecibels * 2);
         float scaledDbGain = dbGain * scale;
 
         /*
@@ -662,35 +700,25 @@ private:
             correct component position for drawing. Test these calculations with a dbGain value equal to maxDecibels and
             yPostion computed will be equal to the filterResponseDisplay's height as is correct.
          */
-        float yPosition = scaledDbGain + (height / 2);
+        float yPosition = scaledDbGain + (refHeight / 2);
         return yPosition;
-    }
-    float yAxisToGaindB(float yPos)
-    {
-        auto height = static_cast<float>(getHeight());
-        auto y = height - yPos;
-
-        auto gainRatio = ((y - 0.5f * height) / (0.5f * height));
-        auto scaledDbGain = gainRatio * m_maxDecibels;
-
-        return scaledDbGain;
     }
 
     void handleNewParameterValue(int parameterIndex) override
     {
-        if (!m_isDragging)
-        {
-            //auto defaultVal = 1.0f;
-            //auto param = &getParameter(parameterIndex);
-            //
-            //auto fParam = dynamic_cast<AudioParameterFloat*>(param);
-            //if (fParam)
-            //    defaultVal = *fParam;
-            //else
-            //    defaultVal = param->getValue();
-            //
-            //m_slider.setValue(defaultVal, dontSendNotification);
-        }
+        auto param = &getParameter(parameterIndex);
+        
+        auto defaultVal = 1.0f;
+        auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+        if (fParam)
+            defaultVal = *fParam;
+        else
+            defaultVal = param->getValue();
+        
+        if (m_processor.getParameterID(parameterIndex) == "hpff")
+            m_freqEdit->setText(String(defaultVal), false);
+        if (m_processor.getParameterID(parameterIndex) == "gain")
+            m_gainEdit->setText(String(defaultVal), false);
     }
 
     void thumbValueChanged(float newFreqVal, float newGainVal)
@@ -749,6 +777,9 @@ private:
     float                                                   m_minFrequency;
     float                                                   m_maxFrequency;
     float                                                   m_maxDecibels;
+
+    std::unique_ptr<TextEditor>                             m_freqEdit;
+    std::unique_ptr<TextEditor>                             m_gainEdit;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FilterParameterComponent)
 };
@@ -884,7 +915,6 @@ public:
     {
         //g.fillAll(getLookAndFeel().findColour(TextEditor::ColourIds::highlightColourId));
     }
-
     void resized() override
     {
         FlexBox fb;
