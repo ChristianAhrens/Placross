@@ -293,20 +293,26 @@ void HPFilterProcessor::reset()
 
 void HPFilterProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
+	auto param = getParameters().getUnchecked(parameterIndex);
+	auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+	auto min = fParam->getNormalisableRange().getRange().getStart();
+	auto max = fParam->getNormalisableRange().getRange().getEnd();
+	auto newRangedValue = jmap(jlimit(0.0f, 1.0f, newValue), min, max);
+
 	if (parameterIndex == m_IdToIdxMap.at("hpff"))
 	{
-		m_filter.setCutoffFrequency(newValue);
+		m_filter.setCutoffFrequency(newRangedValue);
 
-		DBG_IF_DEBUG("HPFP new hpff value:" + String(newValue));
+		DBG_IF_DEBUG("HPFP new hpff value:" + String(newRangedValue));
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
 		m_filter.prepare(spec);
 	}
 	else if (parameterIndex == m_IdToIdxMap.at("hpfg"))
 	{
-		m_gain.setGainLinear(newValue);
+		m_gain.setGainLinear(newRangedValue);
 
-		DBG_IF_DEBUG("HPFP new hpfg value:" + String(newValue));
+		DBG_IF_DEBUG("HPFP new hpfg value:" + String(newRangedValue));
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
 		m_gain.prepare(spec);
@@ -398,20 +404,26 @@ void LPFilterProcessor::reset()
 
 void LPFilterProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
+	auto param = getParameters().getUnchecked(parameterIndex);
+	auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+	auto min = fParam->getNormalisableRange().getRange().getStart();
+	auto max = fParam->getNormalisableRange().getRange().getEnd();
+	auto newRangedValue = jmap(jlimit(0.0f, 1.0f, newValue), min, max);
+
 	if (parameterIndex == m_IdToIdxMap.at("lpff"))
 	{
-		m_filter.setCutoffFrequency(newValue);
+		m_filter.setCutoffFrequency(newRangedValue);
 
-		DBG_IF_DEBUG("LPFP new lpff value:" + String(newValue));
+		DBG_IF_DEBUG("LPFP new lpff value:" + String(newRangedValue));
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
 		m_filter.prepare(spec);
 	}
 	else if (parameterIndex == m_IdToIdxMap.at("lpfg"))
 	{
-		m_gain.setGainLinear(newValue);
+		m_gain.setGainLinear(newRangedValue);
 
-		DBG_IF_DEBUG("LPFP new lpfg value:" + String(newValue));
+		DBG_IF_DEBUG("LPFP new lpfg value:" + String(newRangedValue));
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
 		m_gain.prepare(spec);

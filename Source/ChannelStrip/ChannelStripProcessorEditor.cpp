@@ -605,7 +605,7 @@ public:
     void textEditorTextChanged(TextEditor& editor) override { ignoreUnused(editor); }
     void textEditorReturnKeyPressed(TextEditor& editor) override { processChangedTextEditor(editor); }
     void textEditorEscapeKeyPressed(TextEditor& editor) override { resetChangedTextEditor(editor); }
-    void textEditorFocusLost(TextEditor& editor) override { processChangedTextEditor(editor); }
+    void textEditorFocusLost(TextEditor& editor) override { ignoreUnused(editor); }
 
 private:
     //==========================================================================
@@ -622,7 +622,7 @@ private:
                 auto newFreqVal = jlimit(minFrequency, maxFrequency, m_freqEdit->getText().getFloatValue());
 
                 fParam->beginChangeGesture();
-                fParam->setValueNotifyingHost(newFreqVal);
+                *fParam = newFreqVal;
                 fParam->endChangeGesture();
             }
         }
@@ -637,7 +637,7 @@ private:
                 auto newGainVal = jlimit(minGain, maxGain, m_gainEdit->getText().getFloatValue());
 
                 fParam->beginChangeGesture();
-                fParam->setValueNotifyingHost(newGainVal);
+                *fParam = newGainVal;
                 fParam->endChangeGesture();
             }
         }
@@ -800,27 +800,29 @@ private:
     void thumbValueChanged(float newFreqVal, float newGainVal)
     {
         // handle changed freq val
-        if (getParameter(0).getValue() != newFreqVal)
+        auto freqParam = dynamic_cast<AudioParameterFloat*>(&getParameter(0));
+        if (*freqParam != newFreqVal)
         {
             if (!m_isDragging)
-                getParameter(0).beginChangeGesture();
+                freqParam->beginChangeGesture();
         
-            getParameter(0).setValueNotifyingHost(newFreqVal);
+            *freqParam = newFreqVal;
         
             if (!m_isDragging)
-                getParameter(0).endChangeGesture();
+                freqParam->endChangeGesture();
         }
 
         // handle changed gain val
-        if (getParameter(1).getValue() != newGainVal)
+        auto gainParam = dynamic_cast<AudioParameterFloat*>(&getParameter(1));
+        if (*gainParam != newGainVal)
         {
             if (!m_isDragging)
-                getParameter(1).beginChangeGesture();
+                gainParam->beginChangeGesture();
 
-            getParameter(1).setValueNotifyingHost(newGainVal);
+            *gainParam = newGainVal;
 
             if (!m_isDragging)
-                getParameter(1).endChangeGesture();
+                gainParam->endChangeGesture();
         }
 
         repaint();
