@@ -544,8 +544,8 @@ public:
         // draw cutoff thumb
         auto freq = m_processor.getFilterFequency();
         auto thumbDiameter = 3.0f * m_filterPathThickness;
-        auto thumbXPos = frequencyToxAxis(freq, filtergraphBounds.getWidth());
-        auto thumbYPos = dbToYAxis(m_processor.getMagnitudeResponse(freq), filtergraphBounds.getHeight());
+        auto thumbXPos = frequencyToxAxis(freq, static_cast<float>(filtergraphBounds.getWidth()));
+        auto thumbYPos = dbToYAxis(m_processor.getMagnitudeResponse(freq), static_cast<float>(filtergraphBounds.getHeight()));
         g.fillEllipse(thumbXPos - 0.5f * thumbDiameter, thumbYPos - 0.5f * thumbDiameter, thumbDiameter, thumbDiameter);
 
         /*
@@ -582,17 +582,14 @@ public:
     {
         auto pos = e.getPosition();
 
-        auto filtergraphBounds = getLocalBounds().reduced(3);
+        auto filtergraphBounds = getLocalBounds().reduced(3).toFloat();
         filtergraphBounds.removeFromBottom(22);
 
         auto newFreqVal = xAxisToFrequency(pos.getX(), filtergraphBounds.getWidth());
-        auto clippedFreqVal = jlimit(m_minFrequency, m_maxFrequency, newFreqVal);
 
         auto newGainVal = Decibels::decibelsToGain(yAxisToGaindB(pos.getY(), filtergraphBounds.getHeight()));
-        auto clippedGainVal = jlimit(0.0f, 1.0f, newGainVal);
 
         thumbValueChanged(newFreqVal, newGainVal);
-        //thumbValueChanged(clippedFreqVal, clippedGainVal);
     }
     void mouseUp(const MouseEvent& e) override
     {
@@ -634,7 +631,7 @@ private:
                 auto minGain = fParam->getNormalisableRange().getRange().getStart();
                 auto maxGain = fParam->getNormalisableRange().getRange().getEnd();
 
-                auto newGainVal = jlimit(minGain, maxGain, m_gainEdit->getText().getFloatValue());
+                auto newGainVal = jlimit(minGain, maxGain, Decibels::decibelsToGain(m_gainEdit->getText().getFloatValue()));
 
                 fParam->beginChangeGesture();
                 *fParam = newGainVal;
@@ -662,9 +659,9 @@ private:
             auto param = &getParameter(1);
             auto fParam = dynamic_cast<AudioParameterFloat*>(param);
             if (fParam)
-                m_gainEdit->setText(String(*fParam) + " dBFS", false);
+                m_gainEdit->setText(String(Decibels::gainToDecibels(static_cast<float>(*fParam)), 1) + " dBFS", false);
             else if (param)
-                m_gainEdit->setText(String(param->getValue()) + " dBFS", false);
+                m_gainEdit->setText(String(Decibels::gainToDecibels(param->getValue()), 1) + " dBFS", false);
         }
     }
 
@@ -793,7 +790,7 @@ private:
         if (m_processor.getParameterID(parameterIndex) == "lpff" || m_processor.getParameterID(parameterIndex) == "hpff")
             m_freqEdit->setText(String(defaultVal) + " Hz", false);
         if (m_processor.getParameterID(parameterIndex) == "lpfg" || m_processor.getParameterID(parameterIndex) == "hpfg")
-            m_gainEdit->setText(String(defaultVal) + " dBFS", false);
+            m_gainEdit->setText(String(Decibels::gainToDecibels(defaultVal), 1) + " dBFS", false);
     }
 
     //==========================================================================
