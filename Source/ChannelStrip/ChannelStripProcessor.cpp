@@ -323,7 +323,7 @@ void HPFilterProcessor::updateParameterValues()
 
 const String HPFilterProcessor::getName() const
 { 
-	return "HPFilter"; 
+	return "HighPass"; 
 }
 
 
@@ -428,5 +428,5 @@ void LPFilterProcessor::updateParameterValues()
 
 const String LPFilterProcessor::getName() const 
 { 
-	return "LPFilter"; 
+	return "LowPass"; 
 }

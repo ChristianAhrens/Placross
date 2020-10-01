@@ -14,6 +14,7 @@
 
 #include <juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp>
 
+//==============================================================================
 class ChannelStripParameterListener : private AudioProcessorParameter::Listener,
     private AudioProcessorListener,
     private Timer
@@ -514,7 +515,7 @@ public:
         g.saveState();
 
         auto filtergraphBounds = getLocalBounds().reduced(3);
-        filtergraphBounds.removeFromBottom(24);
+        filtergraphBounds.removeFromBottom(22);
 
         // set the graphics context so that everything we draw outside the filtergraphbounds is clipped (we need to close the graph path somehow outside the visible area)
         g.getInternalContext().clipToRectangle(filtergraphBounds);
@@ -561,7 +562,7 @@ public:
     }
     void resized() override
     {
-        auto textEditorBounds = getLocalBounds().reduced(3).removeFromBottom(22);
+        auto textEditorBounds = getLocalBounds().reduced(3, 0).removeFromBottom(22);
 
         FlexBox fb;
         fb.flexDirection = FlexBox::Direction::row;
