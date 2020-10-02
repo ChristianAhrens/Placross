@@ -13,9 +13,17 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-class ProcessorBase  : public AudioProcessor, public AudioProcessorParameter::Listener
+class ChannelStripProcessorBase  : public AudioProcessor, public AudioProcessorParameter::Listener
 {
 public:
+    enum ChannelStripProcessorType
+    {
+        CSPT_LowPass,
+        CSPT_HighPass,
+        CSPT_Gain,
+        CSPT_Invalid
+    };
+
     struct ProcessorParam
     {
         ProcessorParam(String i, String n, float min, float max, float interval, float skew, float def)
@@ -37,11 +45,20 @@ public:
         float skewV;    // value skew
         float defaultV; // default value
     };
-    virtual std::vector<ProcessorBase::ProcessorParam> getProcessorParams() = 0;
+    virtual std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() = 0;
 
 public:
     //==============================================================================
-    ProcessorBase();
+    ChannelStripProcessorBase();
+
+    void initParameters();
+
+    //==============================================================================
+    virtual ChannelStripProcessorType getType() = 0;
+    virtual void updateParameterValues() = 0;
+    virtual float getFilterFequency() = 0;
+    virtual float getFilterGain() = 0;
+    virtual float getMagnitudeResponse(float freq) = 0;
 
     //==============================================================================
     void prepareToPlay(double, int) override;
@@ -66,10 +83,6 @@ public:
     void setStateInformation(const void*, int) override;
 
     //==============================================================================
-    void initParameters();
-    virtual void updateParameterValues() = 0;
-
-    //==============================================================================
     AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
 
@@ -79,6 +92,7 @@ public:
 
     static float getMappedValue(AudioProcessorParameter* param);
     static float getNormalizedValue(AudioProcessorParameter* param);
+    static float getMinDecibels() { return -100.0f; };
 
 protected:
     std::map<String, int> m_IdToIdxMap;
@@ -88,14 +102,19 @@ protected:
 
 private:
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ProcessorBase)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ChannelStripProcessorBase)
 };
 
 //==============================================================================
-class GainProcessor  : public ProcessorBase
+class GainProcessor  : public ChannelStripProcessorBase
 {
 public:
     GainProcessor();
+    
+    ChannelStripProcessorType getType() override;
+    float getMagnitudeResponse(float freq) override;
+    float getFilterFequency() override;
+    float getFilterGain() override;
 
     //==============================================================================
     void processBlock (AudioSampleBuffer& buffer, MidiBuffer&) override;
@@ -107,18 +126,23 @@ public:
 
     const String getName() const override;
 
-    std::vector<ProcessorBase::ProcessorParam> getProcessorParams() override;
+    std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
     dsp::Gain<float> m_gain;
 };
 
 //==============================================================================
-class HPFilterProcessor  : public ProcessorBase
+class HPFilterProcessor  : public ChannelStripProcessorBase
 {
 public:
     HPFilterProcessor();
 
+    ChannelStripProcessorType getType() override;
+    float getMagnitudeResponse(float freq) override;
+    float getFilterFequency() override;
+    float getFilterGain() override;
+
     //==============================================================================
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;
     void reset() override;
@@ -129,18 +153,24 @@ public:
 
     const String getName() const override;
 
-    std::vector<ProcessorBase::ProcessorParam> getProcessorParams() override;
+    std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
+    dsp::StateVariableTPTFilter<float> m_filter;
+    dsp::Gain<float> m_gain;
 };
 
 //==============================================================================
-class LPFilterProcessor : public ProcessorBase
+class LPFilterProcessor : public ChannelStripProcessorBase
 {
 public:
     LPFilterProcessor();
 
+    ChannelStripProcessorType getType() override;
+    float getMagnitudeResponse(float freq) override;
+    float getFilterFequency() override;
+    float getFilterGain() override;
+
     //==============================================================================
     void processBlock(AudioSampleBuffer& buffer, MidiBuffer&) override;
     void reset() override;
@@ -151,8 +181,9 @@ public:
 
     const String getName() const override;
 
-    std::vector<ProcessorBase::ProcessorParam> getProcessorParams() override;
+    std::vector<ChannelStripProcessorBase::ProcessorParam> getProcessorParams() override;
 
 private:
-    dsp::ProcessorDuplicator<dsp::IIR::Filter<float>, dsp::IIR::Coefficients<float>> m_filter;
+    dsp::StateVariableTPTFilter<float> m_filter;
+    dsp::Gain<float> m_gain;
 };

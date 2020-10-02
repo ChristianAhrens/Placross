@@ -11,11 +11,18 @@
 #include "ChannelStripProcessor.h"
 #include "ChannelStripProcessorEditor.h"
 
-ProcessorBase::ProcessorBase()
+static void DBG_IF_DEBUG(String s)
+{
+#ifdef DEBUG
+	DBG(s);
+#endif
+}
+
+ChannelStripProcessorBase::ChannelStripProcessorBase()
 {
 }
 
-void ProcessorBase::prepareToPlay(double sampleRate, int samplesPerBlock)
+void ChannelStripProcessorBase::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 	m_sampleRate = sampleRate;
 	m_samplesPerBlock = samplesPerBlock;
@@ -23,66 +30,66 @@ void ProcessorBase::prepareToPlay(double sampleRate, int samplesPerBlock)
 	updateParameterValues();
 }
 
-void ProcessorBase::releaseResources() 
+void ChannelStripProcessorBase::releaseResources() 
 {
 }
 
-void ProcessorBase::processBlock(AudioSampleBuffer&, MidiBuffer&) 
+void ChannelStripProcessorBase::processBlock(AudioSampleBuffer&, MidiBuffer&) 
 {
 }
 
-const String ProcessorBase::getName() const 
+const String ChannelStripProcessorBase::getName() const 
 {
 	return {}; 
 }
 
-bool ProcessorBase::acceptsMidi() const 
+bool ChannelStripProcessorBase::acceptsMidi() const 
 {
 	return false; 
 }
 
-bool ProcessorBase::producesMidi() const 
+bool ChannelStripProcessorBase::producesMidi() const 
 {
 	return false; 
 }
 
-double ProcessorBase::getTailLengthSeconds() const 
+double ChannelStripProcessorBase::getTailLengthSeconds() const 
 {
 	return 0; 
 }
 
-int ProcessorBase::getNumPrograms() 
+int ChannelStripProcessorBase::getNumPrograms() 
 { 
 	return 0; 
 }
 
-int ProcessorBase::getCurrentProgram() 
+int ChannelStripProcessorBase::getCurrentProgram() 
 { 
 	return 0; 
 }
 
-void ProcessorBase::setCurrentProgram(int) 
+void ChannelStripProcessorBase::setCurrentProgram(int) 
 {
 }
 
-const String ProcessorBase::getProgramName(int) 
+const String ChannelStripProcessorBase::getProgramName(int) 
 { 
 	return {}; 
 }
 
-void ProcessorBase::changeProgramName(int, const String&) 
+void ChannelStripProcessorBase::changeProgramName(int, const String&) 
 {
 }
 
-void ProcessorBase::getStateInformation(MemoryBlock&) 
+void ChannelStripProcessorBase::getStateInformation(MemoryBlock&) 
 {
 }
 
-void ProcessorBase::setStateInformation(const void*, int)
+void ChannelStripProcessorBase::setStateInformation(const void*, int)
 {
 }
 
-void ProcessorBase::initParameters()
+void ChannelStripProcessorBase::initParameters()
 {
 	for (auto param : getProcessorParams())
 	{
@@ -98,13 +105,13 @@ void ProcessorBase::initParameters()
 	}
 }
 
-void ProcessorBase::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
+void ChannelStripProcessorBase::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
 {
 	ignoreUnused(parameterIndex);
 	ignoreUnused(gestureIsStarting);
 }
 
-AudioProcessorEditor* ProcessorBase::createEditor()
+AudioProcessorEditor* ChannelStripProcessorBase::createEditor()
 {
 	auto editor = std::make_unique<ChannelStripProcessorEditor>(*this);
 	editor->setSize(50, 60);
@@ -112,36 +119,40 @@ AudioProcessorEditor* ProcessorBase::createEditor()
 	return editor.release();
 }
 
-bool ProcessorBase::hasEditor() const
+bool ChannelStripProcessorBase::hasEditor() const
 {
 	return true;
 }
 
-float ProcessorBase::getMappedValue(AudioProcessorParameter* param)
+float ChannelStripProcessorBase::getMappedValue(AudioProcessorParameter* param)
 {
 	auto floatParam = dynamic_cast<AudioParameterFloat*>(param);
 	if (floatParam)
 	{
-		auto normalizedVal = param->getValue();
+		// We expect the current value to be a normalized one that shall be mapped 
+		// to a range of real values (e.g. given normalized 0...1 mapped to real 20Hz...20kHz)
+		float val = *floatParam;
 		auto minVal = floatParam->getNormalisableRange().getRange().getStart();
 		auto maxVal = floatParam->getNormalisableRange().getRange().getEnd();
 
-		return normalizedVal * (maxVal - minVal) + minVal;
+		return jmap(jlimit(0.0f, 1.0f, val), minVal, maxVal);
 	}
 	else
 		return 0.0f;
 }
 
-float ProcessorBase::getNormalizedValue(AudioProcessorParameter* param)
+float ChannelStripProcessorBase::getNormalizedValue(AudioProcessorParameter* param)
 {
 	auto floatParam = dynamic_cast<AudioParameterFloat*>(param);
 	if (floatParam)
 	{
-		auto normalizedVal = param->getValue();
-		//auto minVal = floatParam->getNormalisableRange().getRange().getStart();
-		//auto maxVal = floatParam->getNormalisableRange().getRange().getEnd();
+		// We expect the current value to be within a range of real-life values that shall be mapped 
+		// to normlized range 0..1 (e.g. given real 20Hz...20kHz to normalized 0...1)
+		float val = *floatParam;
+		auto minVal = floatParam->getNormalisableRange().getRange().getStart();
+		auto maxVal = floatParam->getNormalisableRange().getRange().getEnd();
 
-		return normalizedVal;
+		return jmap(jlimit(minVal, maxVal, val), minVal, maxVal, 0.0f, 1.0f);
 	}
 	else
 		return 0.0f;
@@ -149,14 +160,34 @@ float ProcessorBase::getNormalizedValue(AudioProcessorParameter* param)
 
 
 GainProcessor::GainProcessor()
-	: ProcessorBase()
+	: ChannelStripProcessorBase()
 {
 	initParameters();
 }
 
-std::vector<ProcessorBase::ProcessorParam> GainProcessor::getProcessorParams()
+ChannelStripProcessorBase::ChannelStripProcessorType GainProcessor::getType()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"gain", "Gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f} };
+	return ChannelStripProcessorBase::CSPT_Gain;
+}
+
+float GainProcessor::getMagnitudeResponse(float freq)
+{
+	return 1.0f;
+}
+
+float GainProcessor::getFilterFequency()
+{
+	return -1.0f;
+}
+
+float GainProcessor::getFilterGain()
+{
+	return 1.0f;
+}
+
+std::vector<ChannelStripProcessorBase::ProcessorParam> GainProcessor::getProcessorParams()
+{
+	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ { "gain", "Gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f } };
 }
 
 void GainProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -175,8 +206,9 @@ void GainProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
 	if (parameterIndex == m_IdToIdxMap.at("gain"))
 	{
-		//DBG(String(__FUNCTION__) + " gain " + String(newValue));
 		m_gain.setGainLinear(newValue);
+
+		DBG_IF_DEBUG("GP new gain value:" + String(newValue));
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
 		m_gain.prepare(spec);
@@ -186,7 +218,7 @@ void GainProcessor::parameterValueChanged(int parameterIndex, float newValue)
 void GainProcessor::updateParameterValues()
 {
 	auto idx = m_IdToIdxMap.at("gain");
-	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
 }
 
 const String GainProcessor::getName() const 
@@ -196,14 +228,57 @@ const String GainProcessor::getName() const
 
 
 HPFilterProcessor::HPFilterProcessor()
-	: ProcessorBase()
+	: ChannelStripProcessorBase()
 {
 	initParameters();
+
+	m_filter.setType(dsp::StateVariableTPTFilterType::highpass);
 }
 
-std::vector<ProcessorBase::ProcessorParam> HPFilterProcessor::getProcessorParams()
+ChannelStripProcessorBase::ChannelStripProcessorType HPFilterProcessor::getType()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"hpff", "Highpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20.0f} };
+	return ChannelStripProcessorBase::CSPT_HighPass;
+}
+
+float HPFilterProcessor::getMagnitudeResponse(float freq)
+{
+	float magnitude = 0.0;
+	float T = 1 / m_sampleRate;
+	
+	float wdCutoff = 2 * MathConstants<float>::pi * m_filter.getCutoffFrequency();
+
+	//Calculating pre-warped/analogue cutoff frequency to use in virtual analogue frequeny response calculations
+	float cutOff = (2 / T) * tan(wdCutoff * T / 2);
+
+	//Digital frequency to evaluate
+	float wdEval = 2 * MathConstants<float>::pi * freq;
+	float sValue = (2 / T) * tan(wdEval * T / 2);
+
+	/* This is the digital transfer function which is equal to the analogue transfer function
+	 evaluated at H(s) where s = (2/T) * tan(wd*T/2) hence why the cutoff used is the pre warped analogue equivalent.
+	 See Art Of VA Filter Design 3.8 Bilinear Transform Section */
+	magnitude = sValue / (sValue + cutOff);
+
+	magnitude = magnitude * m_gain.getGainLinear();
+
+	//Convert to db for log db response display
+	magnitude = Decibels::gainToDecibels(magnitude, getMinDecibels());
+	return  magnitude;
+}
+
+float HPFilterProcessor::getFilterFequency()
+{
+	return m_filter.getCutoffFrequency();
+}
+
+float HPFilterProcessor::getFilterGain()
+{
+	return m_gain.getGainLinear();
+}
+
+std::vector<ChannelStripProcessorBase::ProcessorParam> HPFilterProcessor::getProcessorParams()
+{
+	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ { "hpff", "Highpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20.0f }, { "hpfg", "Highpass gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f } };
 }
 
 void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -211,46 +286,110 @@ void HPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
 	m_filter.process(context);
+	m_gain.process(context);
 }
 
 void HPFilterProcessor::reset()
 {
 	m_filter.reset();
+	m_gain.reset();
 }
 
 void HPFilterProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
+	auto param = getParameters().getUnchecked(parameterIndex);
+	auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+	auto min = fParam->getNormalisableRange().getRange().getStart();
+	auto max = fParam->getNormalisableRange().getRange().getEnd();
+	auto newRangedValue = jmap(jlimit(0.0f, 1.0f, newValue), min, max);
+
 	if (parameterIndex == m_IdToIdxMap.at("hpff"))
 	{
-		//DBG(String(__FUNCTION__) + " hpff " + String(newValue));
-		*m_filter.state = *dsp::IIR::Coefficients<float>::makeHighPass(m_sampleRate, newValue);
+		m_filter.setCutoffFrequency(newRangedValue);
+
+		DBG_IF_DEBUG("HPFP new hpff value:" + String(newRangedValue));
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
 		m_filter.prepare(spec);
+	}
+	else if (parameterIndex == m_IdToIdxMap.at("hpfg"))
+	{
+		m_gain.setGainLinear(newRangedValue);
+
+		DBG_IF_DEBUG("HPFP new hpfg value:" + String(newRangedValue));
+
+		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
+		m_gain.prepare(spec);
 	}
 }
 
 void HPFilterProcessor::updateParameterValues()
 {
 	auto idx = m_IdToIdxMap.at("hpff");
-	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
+	idx = m_IdToIdxMap.at("hpfg");
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
 }
 
 const String HPFilterProcessor::getName() const
 { 
-	return "HPFilter"; 
+	return "HighPass"; 
 }
 
 
 LPFilterProcessor::LPFilterProcessor()
-	: ProcessorBase()
+	: ChannelStripProcessorBase()
 {
 	initParameters();
+
+	m_filter.setType(dsp::StateVariableTPTFilterType::lowpass);
 }
 
-std::vector<ProcessorBase::ProcessorParam> LPFilterProcessor::getProcessorParams()
+ChannelStripProcessorBase::ChannelStripProcessorType LPFilterProcessor::getType()
 {
-	return std::vector<ProcessorBase::ProcessorParam>{ {"lpff", "Lowpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20000.0f} };
+	return ChannelStripProcessorBase::CSPT_LowPass;
+}
+
+float LPFilterProcessor::getMagnitudeResponse(float freq)
+{
+	float magnitude = 0.0;
+	float T = 1 / m_sampleRate;
+
+	float wdCutoff = 2 * MathConstants<float>::pi * m_filter.getCutoffFrequency();
+
+	//Calculating pre-warped/analogue cutoff frequency to use in virtual analogue frequeny response calculations
+	float cutOff = (2 / T) * tan(wdCutoff * T / 2);
+
+	//Digital frequency to evaluate
+	float wdEval = 2 * MathConstants<float>::pi * freq;
+	float sValue = (2 / T) * tan(wdEval * T / 2);
+
+
+	/* This is the digital transfer function which is equal to the analogue transfer function
+	 evaluated at H(s) where s = (2/T) * tan(wd*T/2) hence why the cutoff used is the pre warped analogue equivalent.
+	 See Art Of VA Filter Design 3.8 Bilinear Transform Section */
+	magnitude = cutOff / (sValue + cutOff);
+
+	magnitude = magnitude * m_gain.getGainLinear();
+
+	//Convert to db for log db response display
+	magnitude = Decibels::gainToDecibels(magnitude, getMinDecibels());
+	return  magnitude;
+}
+
+float LPFilterProcessor::getFilterFequency()
+{
+	return m_filter.getCutoffFrequency();
+}
+
+float LPFilterProcessor::getFilterGain()
+{
+	return m_gain.getGainLinear();
+}
+
+std::vector<ChannelStripProcessorBase::ProcessorParam> LPFilterProcessor::getProcessorParams()
+{
+	return std::vector<ChannelStripProcessorBase::ProcessorParam>{ { "lpff", "Lowpass freq.", 20.0f, 20000.0f, 1.0f, 1.0f, 20000.0f }, { "lpfg", "Lowpass gain", 0.0f, 1.0f, 0.01f, 1.0f, 1.0f } };
 }
 
 void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
@@ -258,32 +397,52 @@ void LPFilterProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer&)
 	dsp::AudioBlock<float> block(buffer);
 	dsp::ProcessContextReplacing<float> context(block);
 	m_filter.process(context);
+	m_gain.process(context);
 }
 
 void LPFilterProcessor::reset()
 {
 	m_filter.reset();
+	m_gain.reset();
 }
 
 void LPFilterProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
+	auto param = getParameters().getUnchecked(parameterIndex);
+	auto fParam = dynamic_cast<AudioParameterFloat*>(param);
+	auto min = fParam->getNormalisableRange().getRange().getStart();
+	auto max = fParam->getNormalisableRange().getRange().getEnd();
+	auto newRangedValue = jmap(jlimit(0.0f, 1.0f, newValue), min, max);
+
 	if (parameterIndex == m_IdToIdxMap.at("lpff"))
 	{
-		//DBG(String(__FUNCTION__) + " lpff " + String(newValue));
-		*m_filter.state = *dsp::IIR::Coefficients<float>::makeLowPass(m_sampleRate, newValue);
+		m_filter.setCutoffFrequency(newRangedValue);
+
+		DBG_IF_DEBUG("LPFP new lpff value:" + String(newRangedValue));
 
 		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
 		m_filter.prepare(spec);
+	}
+	else if (parameterIndex == m_IdToIdxMap.at("lpfg"))
+	{
+		m_gain.setGainLinear(newRangedValue);
+
+		DBG_IF_DEBUG("LPFP new lpfg value:" + String(newRangedValue));
+
+		dsp::ProcessSpec spec{ m_sampleRate, static_cast<uint32> (m_samplesPerBlock), 1 };
+		m_gain.prepare(spec);
 	}
 }
 
 void LPFilterProcessor::updateParameterValues()
 {
 	auto idx = m_IdToIdxMap.at("lpff");
-	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
+	idx = m_IdToIdxMap.at("lpfg");
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
 }
 
 const String LPFilterProcessor::getName() const 
 { 
-	return "LPFilter"; 
+	return "LowPass"; 
 }
