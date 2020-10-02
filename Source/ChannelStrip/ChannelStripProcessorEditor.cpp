@@ -485,7 +485,6 @@ public:
 
         m_minFrequency = 20.0;
         m_maxFrequency = 20000.0;
-        m_maxDecibels = 20.0;
 
         auto fParam = dynamic_cast<AudioParameterFloat*>(&getParameter(0));
         if (fParam)
@@ -587,7 +586,7 @@ public:
 
         auto newFreqVal = xAxisToFrequency(pos.getX(), filtergraphBounds.getWidth());
 
-        auto newGainVal = Decibels::decibelsToGain(yAxisToGaindB(pos.getY(), filtergraphBounds.getHeight()));
+        auto newGainVal = Decibels::decibelsToGain(yAxisToGaindB(pos.getY(), filtergraphBounds.getHeight()), m_processor.getMinDecibels());
 
         thumbValueChanged(newFreqVal, newGainVal);
     }
@@ -631,7 +630,7 @@ private:
                 auto minGain = fParam->getNormalisableRange().getRange().getStart();
                 auto maxGain = fParam->getNormalisableRange().getRange().getEnd();
 
-                auto newGainVal = jlimit(minGain, maxGain, Decibels::decibelsToGain(m_gainEdit->getText().getFloatValue()));
+                auto newGainVal = jlimit(minGain, maxGain, Decibels::decibelsToGain(m_gainEdit->getText().getFloatValue(), m_processor.getMinDecibels()));
 
                 fParam->beginChangeGesture();
                 *fParam = newGainVal;
@@ -659,9 +658,9 @@ private:
             auto param = &getParameter(1);
             auto fParam = dynamic_cast<AudioParameterFloat*>(param);
             if (fParam)
-                m_gainEdit->setText(String(Decibels::gainToDecibels(static_cast<float>(*fParam)), 1) + " dBFS", false);
+                m_gainEdit->setText(String(Decibels::gainToDecibels(static_cast<float>(*fParam), m_processor.getMinDecibels()), 1) + " dBFS", false);
             else if (param)
-                m_gainEdit->setText(String(Decibels::gainToDecibels(param->getValue()), 1) + " dBFS", false);
+                m_gainEdit->setText(String(Decibels::gainToDecibels(param->getValue(), m_processor.getMinDecibels()), 1) + " dBFS", false);
         }
     }
 
@@ -753,26 +752,23 @@ private:
 
     float yAxisToGaindB(int yPos, float refHeight)
     {
-        auto y = refHeight - yPos;
-
-        auto gainRatio = ((y - 0.5f * refHeight) / (0.5f * refHeight));
-        auto scaledDbGain = gainRatio * m_maxDecibels;
-
-        return scaledDbGain;
+        if (refHeight == 0.0f)
+            return 0.0f;
+        
+        auto gain = (refHeight - yPos) / refHeight;
+        auto dbGain = Decibels::gainToDecibels(gain, m_processor.getMinDecibels());
+        
+        return dbGain;
     }
     float dbToYAxis(float dbGain, float refHeight)
     {
-        //Scale gain with this value, height of component is divded by maxDB * 2 for -max to +max db response display
-        float scale = -(refHeight) / (m_maxDecibels * 2);
-        float scaledDbGain = dbGain * scale;
-
-        /*
-            Negative db values will result in a negative yposition so add height/2 to result to scale into
-            correct component position for drawing. Test these calculations with a dbGain value equal to maxDecibels and
-            yPostion computed will be equal to the filterResponseDisplay's height as is correct.
-         */
-        float yPosition = scaledDbGain + (refHeight / 2);
-        return yPosition;
+        if (refHeight == 0.0f)
+            return 0.0f;
+        
+        auto gain = Decibels::decibelsToGain(dbGain, m_processor.getMinDecibels());
+        auto yPos = refHeight - (gain * refHeight);
+        
+        return yPos;
     }
 
     //==========================================================================
@@ -790,7 +786,7 @@ private:
         if (m_processor.getParameterID(parameterIndex) == "lpff" || m_processor.getParameterID(parameterIndex) == "hpff")
             m_freqEdit->setText(String(defaultVal) + " Hz", false);
         if (m_processor.getParameterID(parameterIndex) == "lpfg" || m_processor.getParameterID(parameterIndex) == "hpfg")
-            m_gainEdit->setText(String(Decibels::gainToDecibels(defaultVal), 1) + " dBFS", false);
+            m_gainEdit->setText(String(Decibels::gainToDecibels(defaultVal, m_processor.getMinDecibels()), 1) + " dBFS", false);
     }
 
     //==========================================================================
@@ -850,7 +846,6 @@ private:
 
     float                                                   m_minFrequency;
     float                                                   m_maxFrequency;
-    float                                                   m_maxDecibels;
 
     std::unique_ptr<TextEditor>                             m_freqEdit;
     std::unique_ptr<TextEditor>                             m_gainEdit;

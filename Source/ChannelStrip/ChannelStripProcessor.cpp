@@ -262,7 +262,7 @@ float HPFilterProcessor::getMagnitudeResponse(float freq)
 	magnitude = magnitude * m_gain.getGainLinear();
 
 	//Convert to db for log db response display
-	magnitude = Decibels::gainToDecibels(magnitude);
+	magnitude = Decibels::gainToDecibels(magnitude, getMinDecibels());
 	return  magnitude;
 }
 
@@ -373,7 +373,7 @@ float LPFilterProcessor::getMagnitudeResponse(float freq)
 	magnitude = magnitude * m_gain.getGainLinear();
 
 	//Convert to db for log db response display
-	magnitude = Decibels::gainToDecibels(magnitude);
+	magnitude = Decibels::gainToDecibels(magnitude, getMinDecibels());
 	return  magnitude;
 }
 

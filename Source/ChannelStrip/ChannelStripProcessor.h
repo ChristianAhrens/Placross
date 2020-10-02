@@ -92,6 +92,7 @@ public:
 
     static float getMappedValue(AudioProcessorParameter* param);
     static float getNormalizedValue(AudioProcessorParameter* param);
+    static float getMinDecibels() { return -100.0f; };
 
 protected:
     std::map<String, int> m_IdToIdxMap;
