@@ -87,18 +87,6 @@ void ChannelStripComponent::createAudioNodes()
 {
 	m_audioInputNode = m_mainProcessor->addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
 
-	Node::Ptr HPFnode = m_mainProcessor->addNode(std::make_unique<HPFilterProcessor>());
-	if (HPFnode != nullptr)
-	{
-		addAndMakeVisible(HPFnode->getProcessor()->createEditorIfNeeded());
-		HPFnode->getProcessor()->setPlayConfigDetails(
-			m_mainProcessor->getNumInputChannels(), 
-			m_mainProcessor->getNumOutputChannels(),
-			m_mainProcessor->getSampleRate(),
-			m_mainProcessor->getBlockSize());
-		HPFnode->getProcessor()->enableAllBuses();
-	}
-
 	Node::Ptr LPFnode = m_mainProcessor->addNode(std::make_unique<LPFilterProcessor>());
 	if (LPFnode != nullptr)
 	{
@@ -110,6 +98,18 @@ void ChannelStripComponent::createAudioNodes()
 			m_mainProcessor->getBlockSize());
 		LPFnode->getProcessor()->enableAllBuses();
 	}
+    
+    Node::Ptr HPFnode = m_mainProcessor->addNode(std::make_unique<HPFilterProcessor>());
+    if (HPFnode != nullptr)
+    {
+        addAndMakeVisible(HPFnode->getProcessor()->createEditorIfNeeded());
+        HPFnode->getProcessor()->setPlayConfigDetails(
+            m_mainProcessor->getNumInputChannels(),
+            m_mainProcessor->getNumOutputChannels(),
+            m_mainProcessor->getSampleRate(),
+            m_mainProcessor->getBlockSize());
+        HPFnode->getProcessor()->enableAllBuses();
+    }
 
 	Node::Ptr Gainnode = m_mainProcessor->addNode(std::make_unique<GainProcessor>());
 	if (Gainnode != nullptr)
