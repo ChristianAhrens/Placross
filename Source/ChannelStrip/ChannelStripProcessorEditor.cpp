@@ -21,7 +21,7 @@ class ChannelStripParameterListener : private AudioProcessorParameter::Listener,
 {
 public:
     ChannelStripParameterListener(AudioProcessor& proc, const Array<AudioProcessorParameter*>& params, int parameterIndex = -1)
-        : m_processor(proc), m_parameters(params), m_isLegacyParam(params.isEmpty() ? false : juce::LegacyAudioParameter::isLegacy(params[0])), m_singleParameterIndex(parameterIndex)
+        : m_processor(proc), m_parameters(params), m_singleParameterIndex(parameterIndex), m_isLegacyParam(params.isEmpty() ? false : juce::LegacyAudioParameter::isLegacy(params[0]))
     {
         if (m_isLegacyParam)
             m_processor.addListener(this);
@@ -355,6 +355,7 @@ class CustomColouredParameter
 {
 public:
     CustomColouredParameter() {};
+    virtual ~CustomColouredParameter() {};
 
     virtual void setCustomColour(const Colour& colour) = 0;
 
@@ -526,11 +527,15 @@ public:
 
         switch (m_type)
         {
-        case ChannelStripProcessorBase::ChannelStripProcessorType::CSPT_LowPass:
+        case ChannelStripProcessorBase::CSPT_LowPass:
             drawLowpass(filtergraphBounds);
             break;
-        case ChannelStripProcessorBase::ChannelStripProcessorType::CSPT_HighPass:
+        case ChannelStripProcessorBase::CSPT_HighPass:
             drawHighpass(filtergraphBounds);
+            break;
+        case ChannelStripProcessorBase::CSPT_Gain:
+        case ChannelStripProcessorBase::CSPT_Invalid:
+        default:
             break;
         }
 
