@@ -129,11 +129,13 @@ float ChannelStripProcessorBase::getMappedValue(AudioProcessorParameter* param)
 	auto floatParam = dynamic_cast<AudioParameterFloat*>(param);
 	if (floatParam)
 	{
-		auto normalizedVal = param->getValue();
+		// We expect the current value to be a normalized one that shall be mapped 
+		// to a range of real values (e.g. given normalized 0...1 mapped to real 20Hz...20kHz)
+		float val = *floatParam;
 		auto minVal = floatParam->getNormalisableRange().getRange().getStart();
 		auto maxVal = floatParam->getNormalisableRange().getRange().getEnd();
 
-		return normalizedVal * (maxVal - minVal) + minVal;
+		return jmap(jlimit(0.0f, 1.0f, val), minVal, maxVal);
 	}
 	else
 		return 0.0f;
@@ -144,11 +146,13 @@ float ChannelStripProcessorBase::getNormalizedValue(AudioProcessorParameter* par
 	auto floatParam = dynamic_cast<AudioParameterFloat*>(param);
 	if (floatParam)
 	{
-		auto normalizedVal = param->getValue();
-		//auto minVal = floatParam->getNormalisableRange().getRange().getStart();
-		//auto maxVal = floatParam->getNormalisableRange().getRange().getEnd();
+		// We expect the current value to be within a range of real-life values that shall be mapped 
+		// to normlized range 0..1 (e.g. given real 20Hz...20kHz to normalized 0...1)
+		float val = *floatParam;
+		auto minVal = floatParam->getNormalisableRange().getRange().getStart();
+		auto maxVal = floatParam->getNormalisableRange().getRange().getEnd();
 
-		return normalizedVal;
+		return jmap(jlimit(minVal, maxVal, val), minVal, maxVal, 0.0f, 1.0f);
 	}
 	else
 		return 0.0f;
@@ -214,7 +218,7 @@ void GainProcessor::parameterValueChanged(int parameterIndex, float newValue)
 void GainProcessor::updateParameterValues()
 {
 	auto idx = m_IdToIdxMap.at("gain");
-	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
 }
 
 const String GainProcessor::getName() const 
@@ -322,9 +326,9 @@ void HPFilterProcessor::parameterValueChanged(int parameterIndex, float newValue
 void HPFilterProcessor::updateParameterValues()
 {
 	auto idx = m_IdToIdxMap.at("hpff");
-	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
 	idx = m_IdToIdxMap.at("hpfg");
-	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
 }
 
 const String HPFilterProcessor::getName() const
@@ -433,9 +437,9 @@ void LPFilterProcessor::parameterValueChanged(int parameterIndex, float newValue
 void LPFilterProcessor::updateParameterValues()
 {
 	auto idx = m_IdToIdxMap.at("lpff");
-	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
 	idx = m_IdToIdxMap.at("lpfg");
-	parameterValueChanged(idx, getMappedValue(getParameters().getUnchecked(idx)));
+	parameterValueChanged(idx, getNormalizedValue(getParameters().getUnchecked(idx)));
 }
 
 const String LPFilterProcessor::getName() const 
