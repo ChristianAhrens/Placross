@@ -58,6 +58,8 @@
         <FILE id="o5e5OQ" name="Placross.png" compile="0" resource="1" file="Resources/Images/Placross.png"
               xcodeResource="1"/>
         <FILE id="N4Vst6" name="Placross.xcf" compile="0" resource="1" file="Resources/Images/Placross.xcf"/>
+        <FILE id="gTQhEe" name="PlacrossCanvas.png" compile="0" resource="1"
+              file="Resources/Images/PlacrossCanvas.png"/>
         <FILE id="Y5lJRq" name="PlacrossRect.png" compile="0" resource="1"
               file="Resources/Images/PlacrossRect.png"/>
       </GROUP>
@@ -137,7 +139,7 @@
         <MODULEPATH id="juce_dsp" path="../../../../../../JUCE/modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
-    <XCODE_IPHONE targetFolder="Builds/iOS" smallIcon="o5e5OQ" bigIcon="o5e5OQ"
+    <XCODE_IPHONE targetFolder="Builds/iOS" smallIcon="gTQhEe" bigIcon="gTQhEe"
                   iosBackgroundAudio="1" iosDevelopmentTeamID="SB7Q3PP4FQ" UISupportsDocumentBrowser="1"
                   customLaunchStoryboard="Resources/Deployment/iOS/Launchscreen.storyboard">
       <CONFIGURATIONS>
