@@ -10,7 +10,7 @@
 
 #include "AnalyserComponent.h"
 
-#include "../submodules/JUCE-AppBasics/Source/Image_utils.hpp"
+#include <Image_utils.h>
 
 AnalyserComponent::AnalyserComponent() :
     m_fwdFFT(fftOrder),

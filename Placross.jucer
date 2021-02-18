@@ -3,7 +3,7 @@
 <JUCERPROJECT id="InQ33m" name="Placross" projectType="guiapp" defines="JUCE_USE_LAME_AUDIO_FORMAT=1,&#10;JUCE_USE_MP3AUDIOFORMAT=1,"
               bundleIdentifier="com.ChristianAhrens.Placross" version="0.1.8"
               companyName="Christian Ahrens" companyCopyright="2020" companyEmail="christianahrens@me.com"
-              jucerFormatVersion="1">
+              jucerFormatVersion="1" headerPath="../../submodules/JUCE-AppBasics/Source/">
   <MAINGROUP id="cIkH3v" name="Placross">
     <GROUP id="{2F00D803-4C7B-B972-8DBF-6BAEC9E73388}" name="submodules">
       <GROUP id="{3DC4FFDC-5D34-064E-0304-3452EC534EBB}" name="JUCE-AppBasics">
@@ -35,8 +35,10 @@
                 file="submodules/JUCE-AppBasics/Source/CustomLookAndFeel.cpp"/>
           <FILE id="C775ER" name="CustomLookAndFeel.h" compile="0" resource="0"
                 file="submodules/JUCE-AppBasics/Source/CustomLookAndFeel.h"/>
-          <FILE id="RTxQ5r" name="Image_utils.hpp" compile="0" resource="0" file="submodules/JUCE-AppBasics/Source/Image_utils.hpp"/>
-          <FILE id="uuZfSR" name="iOS_utils.hpp" compile="0" resource="0" file="submodules/JUCE-AppBasics/Source/iOS_utils.hpp"/>
+          <FILE id="LwkT69" name="Image_utils.cpp" compile="1" resource="0" file="submodules/JUCE-AppBasics/Source/Image_utils.cpp"/>
+          <FILE id="pKHjWj" name="Image_utils.h" compile="0" resource="0" file="submodules/JUCE-AppBasics/Source/Image_utils.h"/>
+          <FILE id="zvddLc" name="iOS_utils.cpp" compile="1" resource="0" file="submodules/JUCE-AppBasics/Source/iOS_utils.cpp"/>
+          <FILE id="KCsiXp" name="iOS_utils.h" compile="0" resource="0" file="submodules/JUCE-AppBasics/Source/iOS_utils.h"/>
           <FILE id="Ifqqws" name="OverlayToggleComponentBase.cpp" compile="1"
                 resource="0" file="submodules/JUCE-AppBasics/Source/OverlayToggleComponentBase.cpp"/>
           <FILE id="hkDVFK" name="OverlayToggleComponentBase.h" compile="0" resource="0"

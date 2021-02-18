@@ -10,7 +10,7 @@
 
 #include "AudioPlayerComponent.h"
 
-#include "../submodules/JUCE-AppBasics/Source/Image_utils.hpp"
+#include <Image_utils.h>
 
 //==============================================================================
 AudioPlayerComponent::AudioPlayerComponent()

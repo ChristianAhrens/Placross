@@ -10,7 +10,7 @@
 
 #include "MainPlacrossContentComponent.h"
 
-#include "../submodules/JUCE-AppBasics/Source/iOS_utils.hpp"
+#include <iOS_utils.h>
 
 
 static constexpr int MAX_SUPPORTED_OUTPUTS = 10;
