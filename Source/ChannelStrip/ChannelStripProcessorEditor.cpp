@@ -74,16 +74,20 @@ private:
     void parameterGestureChanged(int, bool) override {}
 
     //==============================================================================
-    void audioProcessorParameterChanged(AudioProcessor*, int index, float) override
+    void audioProcessorParameterChanged(AudioProcessor* processor, int index, float) override
     {
+        ignoreUnused(processor);
         for (auto parameter : m_parameters)
         {
             if (index == parameter->getParameterIndex())
                 m_parameterValueHasChanged = 1;
         }
     }
-
-    void audioProcessorChanged(AudioProcessor*) override {}
+    void audioProcessorChanged(AudioProcessor* processor, const ChangeDetails& details) override
+    {
+        ignoreUnused(processor);
+        ignoreUnused(details);
+    }
 
     //==============================================================================
     void timerCallback() override
