@@ -360,15 +360,18 @@ AudioPlayerComponent::TransportState AudioPlayerComponent::getCurrentTransportSt
 
 void AudioPlayerComponent::openButtonClicked()
 {
-    FileChooser chooser ("Select an audio file to play...",
-                            {},
-        m_formatManager.getWildcardForAllFormats());
+    auto chooser = std::make_unique<FileChooser>("Select an audio file to play...", File::getSpecialLocation(File::userDocumentsDirectory), m_formatManager.getWildcardForAllFormats(), true, false, this);
 
-    if (chooser.browseForFileToOpen())
-    {
-        auto file = chooser.getResult();
-        loadAudioFile(file);
-    }
+    chooser->launchAsync(FileBrowserComponent::openMode, [this](const FileChooser& chooser)
+        {
+            auto file = chooser.getResult();
+            if (file.getFullPathName().isEmpty())
+                return;
+            loadAudioFile(file);
+
+            delete static_cast<const FileChooser*>(&chooser);
+        });
+    chooser.release();
 }
 
 void AudioPlayerComponent::playButtonClicked()
