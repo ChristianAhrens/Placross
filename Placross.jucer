@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="InQ33m" name="Placross" projectType="guiapp" defines="JUCE_USE_LAME_AUDIO_FORMAT=1,&#10;JUCE_USE_MP3AUDIOFORMAT=1,"
-              bundleIdentifier="com.ChristianAhrens.Placross" version="0.2.0"
+              bundleIdentifier="com.ChristianAhrens.Placross" version="0.2.1"
               companyName="Christian Ahrens" companyCopyright="2020" companyEmail="christianahrens@me.com"
               jucerFormatVersion="1" headerPath="../../submodules/JUCE-AppBasics/Source/">
   <MAINGROUP id="cIkH3v" name="Placross">
